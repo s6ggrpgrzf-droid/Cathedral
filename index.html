@@ -29,9 +29,7 @@
 
   .stage{max-width:560px; margin:0 auto; position:relative; z-index:2;}
 
-  .site-title{text-align:center; margin:2px 0 4px; font-size:15px; letter-spacing:6px;
-    color:#c8a45e; text-transform:uppercase; font-weight:400;}
-  .site-sub{text-align:center; margin:0 0 24px; font-size:13.5px; color:#8a755a; font-style:italic;}
+  .site-sub{text-align:center; margin:0 auto 10px; font-size:13.5px; color:#8a755a; font-style:italic;}
 
   /* ============ THE CATHEDRAL RADIO ============ */
   .radio{
@@ -261,8 +259,7 @@
   /* landscape phones: compress the set so everything working fits the height */
   @media (orientation:landscape) and (max-height:500px){
     body{padding:8px 16px 14px;}
-    .site-title{font-size:11px; margin:0 0 1px;}
-    .site-sub{font-size:11px; margin:0 0 8px;}
+    .site-sub{font-size:11.5px; margin:0 auto 6px;}
     .radio{padding:16px 22px 12px; max-width:520px;}
     .dial{padding:8px 10px 6px; margin-bottom:8px;}
     .dial-band{height:46px;}
@@ -288,9 +285,6 @@
 </head>
 <body>
 <main class="stage">
-  <h1 class="site-title">Cathedral</h1>
-  <p class="site-sub">Old time radio, the way it was heard.</p>
-
   <div class="radio" id="radio">
     <div class="dial" id="dial">
       <div class="dial-glass">
@@ -331,6 +325,7 @@
   </div>
 
   <footer>
+    <p class="site-sub">Old time radio, the way it was heard.</p>
     Broadcasts stream free from the <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a>,
     preserved by the Old Time Radio Researchers.<br>
     Turn the tuning knob. See what's on the air tonight.
