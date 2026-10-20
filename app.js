@@ -297,6 +297,7 @@
         s.textContent = st.dial;
         s.dataset.idx = i;
         s.style.left = stationPos(i) + "%";
+        s.style.top = i % 2 === 0 ? "30%" : "72%";   // staggered broadcast band
         s.style.cursor = "pointer";
         labelsBox.appendChild(s);
       });
