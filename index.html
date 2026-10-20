@@ -151,11 +151,14 @@
   .grille::after{content:""; position:absolute; inset:0;
     background:
       radial-gradient(60% 90% at 50% 50%, transparent 60%, rgba(0,0,0,.4) 100%);}
-  .grille-arch{
-    position:absolute; left:50%; top:12px; transform:translateX(-50%);
-    width:120px; height:120px; border-radius:60px 60px 8px 8px;
-    border:3px solid rgba(16,8,3,.55);
-    box-shadow:inset 0 0 18px rgba(0,0,0,.5);
+  .grille-emblem{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:44px; height:44px; border-radius:50%; z-index:2;
+    background:radial-gradient(circle at 38% 32%, #d9b267 0%, #a37c34 55%, #6b4a1c 100%);
+    border:2px solid #2a1c08;
+    box-shadow:0 2px 6px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,240,200,.6), 0 0 0 3px rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px; color:#3a2608; text-shadow:0 1px 0 rgba(255,240,200,.5);
   }
 
   /* ---- controls ---- */
@@ -220,7 +223,7 @@
     .eye-ring{width:36px; height:36px;}
     .magic-eye label{font-size:7.5px;}
     .grille{height:58px; margin-bottom:8px;}
-    .grille-arch{display:none;}
+    .grille-emblem{width:30px; height:30px; font-size:13px;}
     .knob{width:44px; height:44px;}
     .knob-unit{gap:4px;}
     .knob-unit label{font-size:8px;}
@@ -259,7 +262,7 @@
       <label>Tuning Eye</label>
     </div>
 
-    <div class="grille" aria-hidden="true"><div class="grille-arch"></div></div>
+    <div class="grille" aria-hidden="true"><div class="grille-emblem">✦</div></div>
 
     <div class="controls">
       <div class="knob-unit">
