@@ -12,6 +12,20 @@
   var stations = [], curIdx = -1, powerOn = false;
   var epCache = {};          // station idx -> [episode urls]
   var tuneGen = 0;           // guards async races while tuning
+  var eyeGlass = $("eyeGlass"), eyeWedge = $("eyeWedge");
+
+  /* the magic eye: a dark wedge that closes to a slit at full lock */
+  function drawEye(strength) {
+    var s = Math.min(1, Math.max(0, strength));
+    var half = (42 - 39 * s) * Math.PI / 180, cx = 50, cy = 50, r = 54;
+    var a0 = -Math.PI / 2 - half, a1 = -Math.PI / 2 + half;
+    eyeWedge.setAttribute("d",
+      "M " + cx + " " + cy +
+      " L " + (cx + r * Math.cos(a0)).toFixed(1) + " " + (cy + r * Math.sin(a0)).toFixed(1) +
+      " A " + r + " " + r + " 0 0 1 " +
+      (cx + r * Math.cos(a1)).toFixed(1) + " " + (cy + r * Math.sin(a1)).toFixed(1) + " Z");
+  }
+  drawEye(0.15);
 
   /* ---------- audio: synth clicks, static, and the tube hum ---------- */
   var AC = null, hissGain = null, humNodes = null;
@@ -145,6 +159,7 @@
     var ratio = Math.min(1, n.dist / (spacing / 2));
     hiss(Math.min(0.2, 0.02 + 0.18 * ratio), 0.04);
     whistle(ratio);
+    drawEye(1 - ratio);
   }
 
   function sweepEnd() {
@@ -165,6 +180,7 @@
     document.body.classList.remove("listening");
     player.pause();
     hiss(0.16);
+    drawEye(0.5);   // searching
     fetchEpisodes(curIdx, function (eps) {
       if (gen !== tuneGen || !powerOn) return;
       if (!eps.length) { status.textContent = "Nothing but static on this band."; hiss(0.05); return; }
@@ -181,6 +197,7 @@
     if (!powerOn) return;
     hiss(0);
     if (humNodes) humNodes.stop();
+    drawEye(1);   // full lock
     document.body.classList.add("listening");
     var st = stations[curIdx];
     if (st) status.textContent = st.name + " — on the air.";
@@ -291,6 +308,9 @@
       tuneGen++;
       player.pause();
       hiss(0);
+      whistleOff();
+      drawEye(0.15);
+      eyeGlass.classList.remove("lit");
       dial.classList.remove("on");
       pow.classList.remove("on");
       document.body.classList.remove("listening");
@@ -298,6 +318,7 @@
     } else {
       powerOn = true;
       dial.classList.add("on");
+      eyeGlass.classList.add("lit");
       pow.classList.add("on");
       status.textContent = "The tubes are warming…";
       humOn();                                  // mains hum while the tubes heat
