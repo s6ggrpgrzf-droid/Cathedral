@@ -73,6 +73,21 @@
       humNodes = null;
     } };
   }
+  /* the cabinet's voice: the episode plays THROUGH the wooden box.
+     Boxy midrange hump, rolled-off highs, no deep bass a 6" speaker never made. */
+  var eqDone = false;
+  function cabinetVoice() {
+    var a = ac(); if (!a || eqDone) return; eqDone = true;
+    try {
+      var src = a.createMediaElementSource(player);
+      var hp = a.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 170;
+      var box = a.createBiquadFilter(); box.type = "peaking";
+      box.frequency.value = 740; box.Q.value = 0.7; box.gain.value = 4.5;
+      var lp = a.createBiquadFilter(); lp.type = "lowpass";
+      lp.frequency.value = 2700; lp.Q.value = 0.4;
+      src.connect(hp); hp.connect(box); box.connect(lp); lp.connect(a.destination);
+    } catch (e) { /* element keeps its direct output */ }
+  }
   function click(freq) {
     var a = ac(); if (!a) return;
     var o = a.createOscillator(), g = a.createGain();
@@ -318,6 +333,7 @@
       status.textContent = "The set is dark. Turn it on.";
     } else {
       powerOn = true;
+      cabinetVoice();   // wire the cabinet's voice on the first gesture
       dial.classList.add("on");
       eyeGlass.classList.add("lit");
       pow.classList.add("on");
