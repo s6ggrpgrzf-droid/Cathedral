@@ -149,10 +149,15 @@
     });
   }
 
-  /* ---------- tuning: sweep the dial, snap to the nearest station ---------- */
+  /* ---------- tuning: the needle has mass — a spring chases your finger,
+     and the station pulls it the last of the way in ---------- */
   function stationPos(i) { return 13 + (i / Math.max(1, stations.length - 1)) * 74; }
-  var sweepPos = 13;       // needle position in % while sweeping (13..87)
+  var sweepPos = 13;       // needle position in % (13..87)
+  var sweepTarget = 13;    // where the finger wants it
+  var sweepVel = 0;        // needle velocity — flywheel weight
   var sweeping = false;
+  var chaseOn = false;
+  var lockIdx = -1;
 
   function distToNearest(pos) {
     var best = 1e9, idx = 0;
@@ -163,32 +168,63 @@
     return { dist: best, idx: idx };
   }
 
-  function sweepMove(pos) {
-    sweepPos = Math.min(87, Math.max(13, pos));
-    sweeping = true;
-    var n = distToNearest(sweepPos);
+  function paintNeedle() {
     needle.style.left = sweepPos + "%";
-    status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
-    document.body.classList.remove("listening");
-    // static swells between stations, dies as you approach one
+    var n = distToNearest(sweepPos);
     var spacing = stations.length > 1 ? 74 / (stations.length - 1) : 74;
     var ratio = Math.min(1, n.dist / (spacing / 2));
     hiss(Math.min(0.2, 0.02 + 0.18 * ratio), 0.04);
     whistle(ratio);
     drawEye(1 - ratio);
+    if (sweeping) status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
+  }
+
+  function chase() {
+    // spring-damper: stiff enough to follow, loose enough to glide past stations
+    sweepVel += (sweepTarget - sweepPos) * 0.16;
+    sweepVel *= 0.68;
+    sweepPos += sweepVel;
+    if (sweepPos < 5) { sweepPos = 5; sweepVel = 0; }
+    if (sweepPos > 95) { sweepPos = 95; sweepVel = 0; }
+    paintNeedle();
+    if (Math.abs(sweepTarget - sweepPos) > 0.04 || Math.abs(sweepVel) > 0.04) {
+      requestAnimationFrame(chase);
+    } else {
+      chaseOn = false;
+      sweepPos = sweepTarget;
+      paintNeedle();
+      needle.style.transition = "";   // hand the needle back to CSS for tuneTo locks
+      if (!sweeping && lockIdx >= 0) { var li = lockIdx; lockIdx = -1; tuneTo(li); }
+    }
+  }
+  function startChase() {
+    if (chaseOn) return;
+    chaseOn = true;
+    needle.style.transition = "none";
+    requestAnimationFrame(chase);
+  }
+
+  function sweepMove(pos) {
+    sweepTarget = Math.min(87, Math.max(13, pos));
+    sweeping = true;
+    lockIdx = -1;
+    document.body.classList.remove("listening");
+    startChase();
   }
 
   function sweepEnd() {
     if (!sweeping) return;
     sweeping = false;
-    tuneTo(distToNearest(sweepPos).idx);
+    lockIdx = distToNearest(sweepTarget).idx;
+    sweepTarget = stationPos(lockIdx);       // the station pulls the needle in
+    startChase();
   }
 
   function tuneTo(idx) {
     if (!powerOn || !stations.length) return;
     whistleOff();
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
-    sweepPos = stationPos(curIdx);
+    sweepPos = stationPos(curIdx); sweepTarget = sweepPos; sweepVel = 0;
     var st = stations[curIdx], gen = ++tuneGen;
     needle.style.left = sweepPos + "%";
     tunePtr.style.transform = "rotate(" + (-135 + (curIdx / (stations.length - 1)) * 270) + "deg)";
@@ -235,7 +271,7 @@
     el.addEventListener("pointerdown", function (e) {
       if (!powerOn) return;
       try { el.setPointerCapture(e.pointerId); } catch (err) {}
-      var x0 = e.clientX, pos0 = sweepPos, moved = 0;
+      var x0 = e.clientX, pos0 = sweepTarget, moved = 0;
       player.pause();
       tuneGen++;   // cancel any in-flight tune
       function mv(ev) {
