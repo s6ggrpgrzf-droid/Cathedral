@@ -36,6 +36,7 @@
   /* ============ THE CATHEDRAL RADIO ============ */
   .radio{
     position:relative; margin:0 auto; max-width:480px;
+    isolation:isolate;
     border-radius:240px 240px 18px 18px / 200px 200px 18px 18px;
     padding:34px 30px 26px;
     background:
@@ -72,6 +73,15 @@
     border:2px solid rgba(20,10,4,.55);
     box-shadow:inset 0 1px 0 rgba(255,225,175,.14);
     pointer-events:none;}
+  /* the cathedral figure: arched grain flowing over the top of the veneer,
+     fading as it runs down the case (behind the fittings, above the finish) */
+  .radio::after{content:""; position:absolute; inset:0; z-index:-1;
+    border-radius:inherit; pointer-events:none;
+    background:repeating-radial-gradient(ellipse 108% 64% at 50% -8%,
+      transparent 0 40px, rgba(16,8,3,.14) 40px 42px,
+      rgba(255,206,150,.05) 42px 44px, transparent 44px 84px);
+    -webkit-mask-image:linear-gradient(180deg,#000 26%, transparent 76%);
+            mask-image:linear-gradient(180deg,#000 26%, transparent 76%);}
 
   /* ---- the dial ---- */
   .dial{
