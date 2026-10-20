@@ -29,7 +29,7 @@
   drawEye(0.15);
 
   /* ---------- audio: synth clicks, static, and the tube hum ---------- */
-  var AC = null, hissGain = null, humNodes = null;
+  var AC = null, hissGain = null, humNodes = null, noiseBuf = null, lastHiss = 0;
   function ac() {
     if (!AC) {
       try {
@@ -39,6 +39,7 @@
         var buf = AC.createBuffer(1, len, AC.sampleRate);
         var d = buf.getChannelData(0);
         for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        noiseBuf = buf;
         var src = AC.createBufferSource();
         src.buffer = buf; src.loop = true;
         var filt = AC.createBiquadFilter();
@@ -52,9 +53,30 @@
     return AC;
   }
   function hiss(level, ramp) {
+    lastHiss = level;
     var a = ac(); if (!a || !hissGain) return;
     hissGain.gain.cancelScheduledValues(a.currentTime);
     hissGain.gain.setTargetAtTime(level, a.currentTime, ramp || 0.08);
+  }
+  /* crackle: random short pops riding on the static, like real band noise */
+  var crackleTimer = null;
+  function crackle() {
+    if (!powerOn) { crackleTimer = null; return; }
+    var a = ac();
+    if (a && noiseBuf && lastHiss > 0.04 && Math.random() < 0.55) {
+      var s = a.createBufferSource(); s.buffer = noiseBuf;
+      s.playbackRate.value = 0.5 + Math.random() * 1.5;
+      var f = a.createBiquadFilter(); f.type = "bandpass";
+      f.frequency.value = 1600 + Math.random() * 2600; f.Q.value = 2.5;
+      var g = a.createGain();
+      var t = a.currentTime, amp = 0.05 + Math.random() * 0.1;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(amp, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + Math.random() * 0.05);
+      s.connect(f); f.connect(g); g.connect(a.destination);
+      s.start(t, Math.random() * 1.5); s.stop(t + 0.15);
+    }
+    crackleTimer = setTimeout(crackle, 140 + Math.random() * 800);
   }
   // the mains hum of warming tubes: low 55Hz + a breath of 110, fading up then away
   function humOn() {
@@ -114,6 +136,55 @@
     whGain.gain.setTargetAtTime(g, a.currentTime, 0.05);
   }
   function whistleOff() { if (whGain && AC) whGain.gain.setTargetAtTime(0, AC.currentTime, 0.03); }
+
+  /* the ghost: the nearest station bleeding faintly through the static as you
+     close in. When you lock, the ghost's episode becomes the program —
+     the bleed turns into the broadcast. */
+  var ghost = null, ghostEqDone = false, ghostIdx = -1, ghostLoading = -1;
+  function ghostEl() {
+    if (!ghost) {
+      ghost = new Audio();
+      ghost.crossOrigin = "anonymous";
+      ghost.volume = 0;
+      var a = ac();
+      if (a && !ghostEqDone) {
+        try {
+          ghostEqDone = true;
+          var gs = a.createMediaElementSource(ghost);
+          var glp = a.createBiquadFilter();
+          glp.type = "lowpass"; glp.frequency.value = 2100;
+          gs.connect(glp); glp.connect(a.destination);
+        } catch (e) { ghostEqDone = true; }
+      }
+    }
+    return ghost;
+  }
+  function ghostKill() {
+    if (ghost) { try { ghost.pause(); } catch (e) {} ghost.volume = 0; }
+    ghostIdx = -1; ghostLoading = -1;
+  }
+  function ghostSeek(idx, ratio) {
+    // start the nearest station whispering under the static
+    if (idx === ghostLoading || idx === ghostIdx) return;
+    ghostLoading = idx;
+    var g = ghostEl();
+    fetchEpisodes(idx, function (eps) {
+      if (!powerOn || ghostLoading !== idx) return;
+      ghostLoading = -1; ghostIdx = idx;
+      if (!eps.length) return;
+      var url = eps[Math.floor(Math.random() * eps.length)];
+      g.src = url; g.currentTime = 0;
+      g.volume = 0;
+      try { var pr = g.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+      ghostDrift(ratio);
+    });
+  }
+  function ghostDrift(ratio) {
+    var g = ghostEl();
+    // the closer the needle, the louder the ghost (max a whisper under the static)
+    var v = ratio < 0.55 ? Math.pow(1 - ratio / 0.55, 2) * 0.32 : 0;
+    if (Math.abs(v - g.volume) > 0.015) g.volume = v;
+  }
   function thunk() {
     var a = ac(); if (!a) return;
     var o = a.createOscillator(), g = a.createGain();
@@ -176,7 +247,12 @@
     hiss(Math.min(0.2, 0.02 + 0.18 * ratio), 0.04);
     whistle(ratio);
     drawEye(1 - ratio);
-    if (sweeping) status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
+    if (sweeping) {
+      status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
+      // the nearest station whispers through as you close in
+      if (ratio < 0.55) { ghostSeek(n.idx, ratio); ghostDrift(ratio); }
+      else ghostDrift(1);
+    }
   }
 
   function chase() {
@@ -233,6 +309,18 @@
     player.pause();
     hiss(0.16);
     drawEye(0.5);   // searching
+    // the ghost becomes the program when it IS the locked station
+    if (ghostIdx === curIdx && ghost && ghost.src && ghost.readyState >= 2) {
+      try {
+        player.src = ghost.src;
+        player.currentTime = ghost.currentTime || 0;
+        var gp = player.play();
+        if (gp && gp.catch) gp.catch(function () {});
+      } catch (e) {}
+      ghostKill();
+      return;
+    }
+    ghostKill();
     fetchEpisodes(curIdx, function (eps) {
       if (gen !== tuneGen || !powerOn) return;
       if (!eps.length) { status.textContent = "Nothing but static on this band."; hiss(0.05); return; }
@@ -361,6 +449,7 @@
       player.pause();
       hiss(0);
       whistleOff();
+      ghostKill();
       drawEye(0.15);
       eyeGlass.classList.remove("lit");
       dial.classList.remove("on");
@@ -370,6 +459,7 @@
     } else {
       powerOn = true;
       cabinetVoice();   // wire the cabinet's voice on the first gesture
+      if (!crackleTimer) crackle();
       dial.classList.add("on");
       eyeGlass.classList.add("lit");
       pow.classList.add("on");
