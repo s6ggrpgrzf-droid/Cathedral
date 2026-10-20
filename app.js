@@ -67,6 +67,23 @@
     o.connect(g); g.connect(a.destination);
     o.start(); o.stop(a.currentTime + 0.07);
   }
+  /* heterodyne whistle: the beat tone as you close on a carrier.
+     Far off = high whine; on the station = it sinks to silence. */
+  var whOsc = null, whGain = null;
+  function whistle(ratio) {
+    var a = ac(); if (!a) return;
+    if (!whOsc) {
+      whOsc = a.createOscillator(); whGain = a.createGain();
+      whOsc.type = "sine"; whOsc.frequency.value = 0; whGain.gain.value = 0;
+      whOsc.connect(whGain); whGain.connect(a.destination); whOsc.start();
+    }
+    var r = Math.min(1, Math.max(0, ratio));
+    whOsc.frequency.setTargetAtTime(r * 1500, a.currentTime, 0.03);
+    // only audible while sweeping between stations, not when locked or at a dead gap
+    var g = (r > 0.04 && r < 0.98) ? 0.018 : 0;
+    whGain.gain.setTargetAtTime(g, a.currentTime, 0.05);
+  }
+  function whistleOff() { if (whGain && AC) whGain.gain.setTargetAtTime(0, AC.currentTime, 0.03); }
   function thunk() {
     var a = ac(); if (!a) return;
     var o = a.createOscillator(), g = a.createGain();
@@ -125,7 +142,9 @@
     document.body.classList.remove("listening");
     // static swells between stations, dies as you approach one
     var spacing = stations.length > 1 ? 90 / (stations.length - 1) : 90;
-    hiss(Math.min(0.2, 0.02 + 0.18 * Math.min(1, n.dist / (spacing / 2))), 0.04);
+    var ratio = Math.min(1, n.dist / (spacing / 2));
+    hiss(Math.min(0.2, 0.02 + 0.18 * ratio), 0.04);
+    whistle(ratio);
   }
 
   function sweepEnd() {
@@ -136,6 +155,7 @@
 
   function tuneTo(idx) {
     if (!powerOn || !stations.length) return;
+    whistleOff();
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
     sweepPos = stationPos(curIdx);
     var st = stations[curIdx], gen = ++tuneGen;
