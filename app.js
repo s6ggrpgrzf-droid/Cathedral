@@ -13,8 +13,8 @@
   var epCache = {};          // station idx -> [episode urls]
   var tuneGen = 0;           // guards async races while tuning
 
-  /* ---------- audio: synth clicks + static ---------- */
-  var AC = null, hissGain = null;
+  /* ---------- audio: synth clicks, static, and the tube hum ---------- */
+  var AC = null, hissGain = null, humNodes = null;
   function ac() {
     if (!AC) {
       try {
@@ -40,6 +40,23 @@
     var a = ac(); if (!a || !hissGain) return;
     hissGain.gain.cancelScheduledValues(a.currentTime);
     hissGain.gain.setTargetAtTime(level, a.currentTime, ramp || 0.08);
+  }
+  // the mains hum of warming tubes: low 55Hz + a breath of 110, fading up then away
+  function humOn() {
+    var a = ac(); if (!a || humNodes) return;
+    var o1 = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain();
+    o1.type = "sine"; o1.frequency.value = 55;
+    o2.type = "sine"; o2.frequency.value = 110;
+    var g2 = a.createGain(); g2.gain.value = 0.25;
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.setTargetAtTime(0.045, a.currentTime, 0.9);
+    o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(a.destination);
+    o1.start(); o2.start();
+    humNodes = { g: g, stop: function () {
+      g.gain.setTargetAtTime(0.0001, a.currentTime, 0.25);
+      setTimeout(function () { try { o1.stop(); o2.stop(); } catch (e) {} }, 900);
+      humNodes = null;
+    } };
   }
   function click(freq) {
     var a = ac(); if (!a) return;
@@ -143,6 +160,7 @@
   player.addEventListener("playing", function () {
     if (!powerOn) return;
     hiss(0);
+    if (humNodes) humNodes.stop();
     document.body.classList.add("listening");
     var st = stations[curIdx];
     if (st) status.textContent = st.name + " — on the air.";
@@ -261,7 +279,11 @@
       powerOn = true;
       dial.classList.add("on");
       pow.classList.add("on");
-      tuneTo(curIdx < 0 ? 0 : curIdx);
+      status.textContent = "The tubes are warming…";
+      humOn();                                  // mains hum while the tubes heat
+      setTimeout(function () {                  // then the set comes alive
+        if (powerOn) tuneTo(curIdx < 0 ? 0 : curIdx);
+      }, 1100);
     }
   });
 
