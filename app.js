@@ -85,14 +85,44 @@
     });
   }
 
-  /* ---------- tuning ---------- */
+  /* ---------- tuning: sweep the dial, snap to the nearest station ---------- */
   function stationPos(i) { return 5 + (i / Math.max(1, stations.length - 1)) * 90; }
+  var sweepPos = 5;        // needle position in % while sweeping (5..95)
+  var sweeping = false;
+
+  function distToNearest(pos) {
+    var best = 1e9, idx = 0;
+    stations.forEach(function (s, i) {
+      var d = Math.abs(stationPos(i) - pos);
+      if (d < best) { best = d; idx = i; }
+    });
+    return { dist: best, idx: idx };
+  }
+
+  function sweepMove(pos) {
+    sweepPos = Math.min(95, Math.max(5, pos));
+    sweeping = true;
+    var n = distToNearest(sweepPos);
+    needle.style.left = sweepPos + "%";
+    status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
+    document.body.classList.remove("listening");
+    // static swells between stations, dies as you approach one
+    var spacing = stations.length > 1 ? 90 / (stations.length - 1) : 90;
+    hiss(Math.min(0.2, 0.02 + 0.18 * Math.min(1, n.dist / (spacing / 2))), 0.04);
+  }
+
+  function sweepEnd() {
+    if (!sweeping) return;
+    sweeping = false;
+    tuneTo(distToNearest(sweepPos).idx);
+  }
 
   function tuneTo(idx) {
     if (!powerOn || !stations.length) return;
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
+    sweepPos = stationPos(curIdx);
     var st = stations[curIdx], gen = ++tuneGen;
-    needle.style.left = stationPos(curIdx) + "%";
+    needle.style.left = sweepPos + "%";
     tunePtr.style.transform = "rotate(" + (-135 + (curIdx / (stations.length - 1)) * 270) + "deg)";
     status.textContent = "Tuning…";
     document.body.classList.remove("listening");
@@ -129,12 +159,56 @@
     if (powerOn) tuneTo(curIdx);
   });
 
-  /* ---------- tuning knob: click = next station, also spin visual ---------- */
-  tuneKnob.addEventListener("click", function () {
-    if (!powerOn) return;
-    click(800);
-    tuneTo(curIdx + 1);
-  });
+  /* ---------- tuning knob: drag to sweep the dial; click = next station ---------- */
+  (function wireSweep(el) {
+    el.addEventListener("pointerdown", function (e) {
+      if (!powerOn) return;
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      var x0 = e.clientX, pos0 = sweepPos, moved = 0;
+      player.pause();
+      tuneGen++;   // cancel any in-flight tune
+      function mv(ev) {
+        var dx = ev.clientX - x0;
+        moved = Math.max(moved, Math.abs(dx));
+        if (moved > 4) sweepMove(pos0 + dx / 2.6);   // ~235px = full band
+      }
+      function up() {
+        el.removeEventListener("pointermove", mv);
+        el.removeEventListener("pointerup", up);
+        el.removeEventListener("pointercancel", up);
+        if (moved <= 4) { click(800); tuneTo(curIdx + 1); }   // simple tap
+        else sweepEnd();
+      }
+      el.addEventListener("pointermove", mv);
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+    });
+  })(tuneKnob);
+  // and the dial face itself sweeps on drag
+  (function wireDialSweep() {
+    var glass = dial.querySelector(".dial-glass");
+    glass.style.cursor = "ew-resize";
+    glass.addEventListener("pointerdown", function (e) {
+      if (!powerOn) return;
+      var target = e.target;
+      if (target && target.dataset && target.dataset.idx !== undefined) return; // label clicks handled separately
+      try { glass.setPointerCapture(e.pointerId); } catch (err) {}
+      var r = glass.getBoundingClientRect(), movedY = 0;
+      player.pause(); tuneGen++;
+      function toPos(ev) { return 5 + ((ev.clientX - r.left) / r.width) * 90; }
+      sweepMove(toPos(e));
+      function mv(ev) { sweepMove(toPos(ev)); }
+      function up() {
+        glass.removeEventListener("pointermove", mv);
+        glass.removeEventListener("pointerup", up);
+        glass.removeEventListener("pointercancel", up);
+        sweepEnd();
+      }
+      glass.addEventListener("pointermove", mv);
+      glass.addEventListener("pointerup", up);
+      glass.addEventListener("pointercancel", up);
+    });
+  })();
   // tapping a dial label tunes straight there
   labelsBox.addEventListener("click", function (e) {
     var t = e.target;
