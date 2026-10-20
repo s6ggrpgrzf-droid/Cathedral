@@ -203,6 +203,28 @@
     .dial-labels span{font-size:8.5px; width:52px;}
     .grille{height:120px;}
   }
+  /* landscape phones: compress the set so everything working fits the height */
+  @media (orientation:landscape) and (max-height:500px){
+    body{padding:8px 16px 14px;}
+    .site-title{font-size:11px; margin:0 0 1px;}
+    .site-sub{font-size:11px; margin:0 0 8px;}
+    .radio{padding:16px 22px 12px; max-width:520px;}
+    .dial{padding:8px 10px 6px; margin-bottom:8px;}
+    .dial-band{height:46px;}
+    .dial-status{margin-top:5px; min-height:16px; font-size:12px;}
+    .magic-eye{margin:-2px 0 6px; gap:2px;}
+    .eye-ring{width:36px; height:36px;}
+    .magic-eye label{font-size:7.5px;}
+    .grille{height:58px; margin-bottom:8px;}
+    .grille-arch{display:none;}
+    .knob{width:44px; height:44px;}
+    .knob-unit{gap:4px;}
+    .knob-unit label{font-size:8px;}
+    .power{padding:6px 12px; font-size:9.5px;}
+    .nameplate{margin-top:8px;}
+    .nameplate span{font-size:10px; padding:4px 14px 3px;}
+    footer{margin-top:12px; font-size:11px; line-height:1.6;}
+  }
   @media (prefers-reduced-motion:reduce){
     .needle{transition:none;}
     .dial-glass{transition:none;}
