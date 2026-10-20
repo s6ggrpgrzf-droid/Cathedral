@@ -102,8 +102,9 @@
     font-size:8.5px; font-weight:700; letter-spacing:.4px; color:#4a2c08;
     text-align:center; width:58px; line-height:1.25; white-space:normal;
   }
-  .dial-ticks{position:absolute; left:4px; right:4px; bottom:2px; height:8px;
-    background:repeating-linear-gradient(90deg, rgba(74,44,8,.65) 0 1px, transparent 1px 10%);}
+  .dial-ticks{position:absolute; left:4px; right:4px; bottom:2px; height:9px;}
+  .dial-ticks i{position:absolute; bottom:0; width:2px; height:9px; border-radius:1px;
+    background:rgba(74,44,8,.8); transform:translateX(-50%);}
   .needle{
     position:absolute; top:-4px; bottom:-4px; width:2.5px; left:7%;
     background:#a01818; border-radius:2px; z-index:1;
@@ -248,7 +249,7 @@
       <div class="dial-glass">
         <div class="dial-band">
           <div class="dial-labels" id="dialLabels"></div>
-          <div class="dial-ticks" aria-hidden="true"></div>
+          <div class="dial-ticks" id="dialTicks" aria-hidden="true"></div>
           <div class="needle" id="needle" aria-hidden="true"></div>
         </div>
       </div>

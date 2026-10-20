@@ -10,6 +10,7 @@
       pow = $("btnPower");
 
   var stations = [], curIdx = -1, powerOn = false;
+  var ticksBox = $("dialTicks");
   var epCache = {};          // station idx -> [episode urls]
   var tuneGen = 0;           // guards async races while tuning
   var eyeGlass = $("eyeGlass"), eyeWedge = $("eyeWedge");
@@ -341,6 +342,9 @@
         s.style.top = i % 2 === 0 ? "30%" : "72%";   // staggered broadcast band
         s.style.cursor = "pointer";
         labelsBox.appendChild(s);
+        var tick = document.createElement("i");   // honest tick at the station's own mark
+        tick.style.left = stationPos(i) + "%";
+        ticksBox.appendChild(tick);
       });
     })
     .catch(function () { stations = []; });
