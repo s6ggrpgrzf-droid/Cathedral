@@ -134,8 +134,8 @@
   }
 
   /* ---------- tuning: sweep the dial, snap to the nearest station ---------- */
-  function stationPos(i) { return 5 + (i / Math.max(1, stations.length - 1)) * 90; }
-  var sweepPos = 5;        // needle position in % while sweeping (5..95)
+  function stationPos(i) { return 7 + (i / Math.max(1, stations.length - 1)) * 86; }
+  var sweepPos = 7;        // needle position in % while sweeping (7..93)
   var sweeping = false;
 
   function distToNearest(pos) {
@@ -148,14 +148,14 @@
   }
 
   function sweepMove(pos) {
-    sweepPos = Math.min(95, Math.max(5, pos));
+    sweepPos = Math.min(93, Math.max(7, pos));
     sweeping = true;
     var n = distToNearest(sweepPos);
     needle.style.left = sweepPos + "%";
     status.textContent = n.dist < 2 ? stations[n.idx].name + "…" : "Tuning…";
     document.body.classList.remove("listening");
     // static swells between stations, dies as you approach one
-    var spacing = stations.length > 1 ? 90 / (stations.length - 1) : 90;
+    var spacing = stations.length > 1 ? 86 / (stations.length - 1) : 86;
     var ratio = Math.min(1, n.dist / (spacing / 2));
     hiss(Math.min(0.2, 0.02 + 0.18 * ratio), 0.04);
     whistle(ratio);
@@ -250,7 +250,7 @@
       try { glass.setPointerCapture(e.pointerId); } catch (err) {}
       var r = glass.getBoundingClientRect(), movedY = 0;
       player.pause(); tuneGen++;
-      function toPos(ev) { return 5 + ((ev.clientX - r.left) / r.width) * 90; }
+      function toPos(ev) { return 7 + ((ev.clientX - r.left) / r.width) * 86; }
       sweepMove(toPos(e));
       function mv(ev) { sweepMove(toPos(ev)); }
       function up() {
