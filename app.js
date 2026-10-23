@@ -66,12 +66,18 @@
   }
   /* episode-list cache (localStorage) so the first tune is fast.
      v2: the Suspense and Benny shelves were widened (pass 6) — the old key
-     would have kept serving the narrow lists forever, so it was retired. */
+     would have kept serving the narrow lists forever, so it was retired.
+     The cache carries a timestamp and refreshes weekly, so episodes the
+     Archive adds later still reach the dial. */
+  var epCacheTs = 0, WEEK = 7 * 24 * 3600 * 1000;
   try {
     var c = JSON.parse(localStorage.getItem("cathedral_eps_v2") || "{}");
-    if (c && typeof c === "object") epCache = c;
+    if (c && typeof c === "object" && c.lists) {
+      epCacheTs = c.ts || 0;
+      if (Date.now() - epCacheTs < WEEK) epCache = c.lists;
+    }
   } catch (e) {}
-  function persistEpCache() { try { localStorage.setItem("cathedral_eps_v2", JSON.stringify(epCache)); } catch (e) {} }
+  function persistEpCache() { try { localStorage.setItem("cathedral_eps_v2", JSON.stringify({ ts: epCacheTs, lists: epCache })); } catch (e) {} }
 
   /* ---------- knob tick rings (11 ticks, majors at the ends and centre) ---------- */
   document.querySelectorAll("[data-ticks]").forEach(function (box) {
@@ -436,7 +442,7 @@
               seen[key] = 1; deduped.push(ep);
             });
             deduped.sort(function (a, b) { return a.url < b.url ? -1 : 1; });
-            epCache[st.name] = deduped; persistEpCache(); done(deduped);
+            epCache[st.name] = deduped; epCacheTs = Date.now(); persistEpCache(); done(deduped);
           }
         });
     });
@@ -937,6 +943,12 @@
       if (curIdx >= 0) { sweepPos = stationPos(curIdx); sweepTarget = sweepPos; needle.style.left = sweepPos + "%"; }
     })
     .catch(function () { stations = []; });
+
+  /* the shell lives on the device: instant opens, and the set shows its
+     face even with no signal (broadcasts still need the network, honestly) */
+  if ("serviceWorker" in navigator) {
+    try { navigator.serviceWorker.register("sw.js").catch(function () {}); } catch (e) {}
+  }
 
   // test hook
   window.__cathedral = {
