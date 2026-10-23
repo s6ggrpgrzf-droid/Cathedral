@@ -7,7 +7,7 @@
   try { REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
   var player = $("player"), dial = $("dial"), needle = $("needle"),
-      labelsBox = $("dialLabels"), status = $("dialStatus"),
+      stationReadout = $("dialStation"), status = $("dialStatus"),
       tuneKnob = $("knobTune"), tunePtr = $("tunePtr"),
       volKnob = $("knobVol"), volPtr = $("volPtr"),
       pow = $("btnPower");
@@ -605,8 +605,26 @@
     return { dist: best, idx: idx };
   }
 
+  /* the backlit readout under the glass: while you sweep it names the
+     station you're passing (dim, still coming through static); at rest it
+     holds the tuned station's full name at full lamp brightness */
+  var readoutName = "\u0001", readoutMode = "\u0001";
+  function paintReadout() {
+    if (!stations.length) return;
+    var name = "", mode = "";
+    if (powerOn) {
+      if (sweeping) { name = stations[distToNearest(sweepPos).idx].name; mode = "seeking"; }
+      else if (curIdx >= 0) { name = stations[curIdx].name; mode = "lit"; }
+    }
+    if (name === readoutName && mode === readoutMode) return;
+    readoutName = name; readoutMode = mode;
+    stationReadout.textContent = name;
+    stationReadout.className = "dial-station" + (mode ? " " + mode : "");
+  }
+
   function paintNeedle() {
     needle.style.left = sweepPos + "%";
+    paintReadout();
     /* the tuning knob turns LIVE with the needle, not only at lock */
     if (stations.length > 1) tunePtr.style.transform = "rotate(" + (-135 + ((sweepPos - 13) / 74) * 270) + "deg)";
     var n = distToNearest(sweepPos);
@@ -677,6 +695,7 @@
     var st = stations[curIdx], gen = ++tuneGen;
     needle.style.left = sweepPos + "%";
     tunePtr.style.transform = "rotate(" + (-135 + (curIdx / Math.max(1, stations.length - 1)) * 270) + "deg)";
+    paintReadout();
     status.textContent = "Tuning…";
     document.body.classList.remove("listening");
     isPlaying = false;
@@ -816,15 +835,6 @@
       glass.addEventListener("pointercancel", up);
     });
   })();
-  labelsBox.addEventListener("click", function (e) {
-    var t = e.target;
-    if (t && t.dataset && t.dataset.idx !== undefined) {
-      if (!powerOn) return;
-      click(800);
-      tuneTo(parseInt(t.dataset.idx, 10));
-    }
-  });
-
   /* ---------- volume knob: turns the MASTER gain (every sound obeys) ---------- */
   function paintVol() {
     volPtr.style.transform = "rotate(" + (-135 + (muted ? 0 : volLevel) * 270) + "deg)";
@@ -882,6 +892,7 @@
       dial.classList.remove("on");
       pow.classList.remove("on");
       document.body.classList.remove("listening");
+      paintReadout();
       status.textContent = "The set is dark. Turn it on.";
       nowCard.hidden = true;
       progressFill.style.width = "0%"; timeElapsed.textContent = ""; timeRemain.textContent = "";
@@ -925,17 +936,8 @@
         for (var k = 0; k < stations.length; k++) if (stations[k].name === saved.station) { curIdx = k; break; }
       }
       stations.forEach(function (st, i) {
-        var s = document.createElement("span");
-        s.textContent = st.dial;
-        s.dataset.idx = i;
-        s.style.left = stationPos(i) + "%";
-        /* labels ride the curved glass arc in two staggered rows — high at
-           centre, falling to the ends — so 13 stations never collide */
-        var frac = stations.length > 1 ? i / (stations.length - 1) : 0.5;
-        var arc = Math.pow(2 * frac - 1, 2);
-        s.style.top = (i % 2 === 0 ? 20 + 16 * arc : 61 + 11 * arc) + "%";
-        s.style.cursor = "pointer";
-        labelsBox.appendChild(s);
+        /* the glass carries numbers and ticks only, like the real sets —
+           the station's name lives in the backlit readout under the glass */
         var tick = document.createElement("i");
         tick.style.left = stationPos(i) + "%";
         ticksBox.appendChild(tick);
@@ -961,6 +963,7 @@
     get glow() { return glowShown; },
     get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
+    get readout() { return stationReadout.textContent + "|" + stationReadout.className; },
     tune: tuneTo,
     power: function () { pow.click(); }
   };
