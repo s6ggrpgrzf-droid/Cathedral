@@ -41,10 +41,14 @@
     var cutoff = Date.now() - 30 * 24 * 3600 * 1000;
     Object.keys(resumeMap).forEach(function (k) { if (!resumeMap[k] || (resumeMap[k].ts || 0) < cutoff) delete resumeMap[k]; });
   })();
+  /* tone: the set's voicing — mellow / full (the original cabinet voice) / clear,
+     plus Night, a compressor that tames peaks for low listening */
+  var toneMode = (saved.tone === "mellow" || saved.tone === "clear") ? saved.tone : "full";
+  var nightOn = !!saved.night;
   function saveState() {
     try {
       var name = (curIdx >= 0 && stations[curIdx]) ? stations[curIdx].name : saved.station;
-      localStorage.setItem("cathedral_state_v1", JSON.stringify({ station: name, vol: volLevel, muted: muted, resume: resumeMap }));
+      localStorage.setItem("cathedral_state_v1", JSON.stringify({ station: name, vol: volLevel, muted: muted, resume: resumeMap, tone: toneMode, night: nightOn }));
     } catch (e) {}
   }
   function saveResume() {
@@ -158,7 +162,7 @@
       var f = a.createBiquadFilter(); f.type = "bandpass";
       f.frequency.value = 1600 + Math.random() * 2600; f.Q.value = 2.5;
       var g = a.createGain();
-      var t = a.currentTime, amp = (0.05 + Math.random() * 0.1) * (lastHiss > 0.04 ? 1 : 0.35);
+      var t = a.currentTime, amp = (0.05 + Math.random() * 0.1) * (lastHiss > 0.04 ? 1 : 0.35) * (nightOn ? 0.45 : 1);
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(amp, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + Math.random() * 0.05);
@@ -188,25 +192,52 @@
      saturation → slow shortwave fading → analyser (for the eye) → master.
      The cabinet's voice: boxy midrange hump, rolled-off highs, no deep bass
      a 6" speaker never made. */
-  var eqDone = false;
+  var eqDone = false, eqHP = null, eqBox = null, eqLP = null, eqPresence = null, eqComp = null;
+  function applyTone() {
+    if (!eqDone || !AC) return;
+    var t = AC.currentTime;
+    function ramp(param, v) { param.setTargetAtTime(v, t, 0.15); }
+    if (toneMode === "mellow") {          // darker, rounder — late-evening voicing
+      ramp(eqBox.frequency, 640); ramp(eqBox.gain, 5.2);
+      ramp(eqLP.frequency, 1850); ramp(eqPresence.gain, -3);
+    } else if (toneMode === "clear") {    // speech forward — for muddy recordings
+      ramp(eqBox.frequency, 740); ramp(eqBox.gain, 1.6);
+      ramp(eqLP.frequency, 3400); ramp(eqPresence.gain, 4.5);
+    } else {                              // full: the original cabinet voice, untouched
+      ramp(eqBox.frequency, 740); ramp(eqBox.gain, 4.5);
+      ramp(eqLP.frequency, 2700); ramp(eqPresence.gain, 0);
+    }
+    if (nightOn) {                        // lean on the loud parts, spare the quiet ones
+      ramp(eqComp.threshold, -24); ramp(eqComp.ratio, 6); ramp(eqComp.knee, 18);
+    } else {
+      ramp(eqComp.threshold, 0); ramp(eqComp.ratio, 1); ramp(eqComp.knee, 0);
+    }
+  }
   function cabinetVoice() {
     var a = ac(); if (!a || eqDone) return; eqDone = true;
     try {
       var src = a.createMediaElementSource(player);
       warmLP = a.createBiquadFilter(); warmLP.type = "lowpass"; warmLP.frequency.value = 14000;
-      var hp = a.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 170;
-      var box = a.createBiquadFilter(); box.type = "peaking";
-      box.frequency.value = 740; box.Q.value = 0.7; box.gain.value = 4.5;
-      var lp = a.createBiquadFilter(); lp.type = "lowpass";
-      lp.frequency.value = 2700; lp.Q.value = 0.4;
+      eqHP = a.createBiquadFilter(); eqHP.type = "highpass"; eqHP.frequency.value = 170;
+      eqBox = a.createBiquadFilter(); eqBox.type = "peaking";
+      eqBox.frequency.value = 740; eqBox.Q.value = 0.7; eqBox.gain.value = 4.5;
+      eqLP = a.createBiquadFilter(); eqLP.type = "lowpass";
+      eqLP.frequency.value = 2700; eqLP.Q.value = 0.4;
+      eqPresence = a.createBiquadFilter(); eqPresence.type = "peaking";
+      eqPresence.frequency.value = 2500; eqPresence.Q.value = 0.8; eqPresence.gain.value = 0;
       var shaper = a.createWaveShaper();
       var curve = new Float32Array(256);
       for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(1.6 * x) / Math.tanh(1.6); }
       shaper.curve = curve; shaper.oversample = "2x";
+      eqComp = a.createDynamicsCompressor();
+      eqComp.threshold.value = 0; eqComp.ratio.value = 1; eqComp.knee.value = 0;
+      eqComp.attack.value = 0.004; eqComp.release.value = 0.24;
       fadeGain = a.createGain(); fadeGain.gain.value = 0.95;
       analyser = a.createAnalyser(); analyser.fftSize = 256;
-      src.connect(warmLP); warmLP.connect(hp); hp.connect(box); box.connect(lp);
-      lp.connect(shaper); shaper.connect(fadeGain); fadeGain.connect(analyser); analyser.connect(master);
+      src.connect(warmLP); warmLP.connect(eqHP); eqHP.connect(eqBox); eqBox.connect(eqLP);
+      eqLP.connect(eqPresence); eqPresence.connect(shaper); shaper.connect(eqComp);
+      eqComp.connect(fadeGain); fadeGain.connect(analyser); analyser.connect(master);
+      applyTone();   // a remembered voicing greets the first broadcast
     } catch (e) { /* element keeps its direct output */ }
   }
   /* slow shortwave fading: the signal swells and sags like a distant station */
@@ -475,6 +506,31 @@
   });
   /* tapping the card itself (not a button) pauses or resumes */
   nowCard.addEventListener("click", function () { togglePlay(); });
+
+  /* ---------- tone controls ---------- */
+  var toneBtns = document.querySelectorAll("[data-tone]"), btnNight = $("btnNight");
+  function paintTone() {
+    toneBtns.forEach(function (b) {
+      var on = b.getAttribute("data-tone") === toneMode;
+      if (on) b.classList.add("active"); else b.classList.remove("active");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    if (nightOn) btnNight.classList.add("active"); else btnNight.classList.remove("active");
+    btnNight.setAttribute("aria-pressed", nightOn ? "true" : "false");
+  }
+  toneBtns.forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toneMode = b.getAttribute("data-tone");
+      ac(); applyTone(); paintTone(); saveState(); click(800);
+    });
+  });
+  btnNight.addEventListener("click", function (e) {
+    e.stopPropagation();
+    nightOn = !nightOn;
+    ac(); applyTone(); paintTone(); saveState(); click(nightOn ? 600 : 900);
+  });
+  paintTone();
   player.addEventListener("timeupdate", paintProgress);
   /* keep the resume point warm while listening (throttled — localStorage is cheap, but not 4× a second) */
   var lastResumeSave = 0;
@@ -859,6 +915,9 @@
     get stations() { return stations; },
     get curIdx() { return curIdx; },
     get vol() { return volLevel; },
+    get tone() { return toneMode; },
+    get night() { return nightOn; },
+    get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
     tune: tuneTo,
     power: function () { pow.click(); }

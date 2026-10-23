@@ -297,6 +297,20 @@
     background:linear-gradient(180deg,#e6c877,#a37c34); border-color:#d8b25e;}
   .now-times{display:flex; justify-content:space-between; margin-top:8px;
     font-size:11.5px; color:#9a7f57; letter-spacing:.6px; min-height:14px;}
+  /* tone: the third control every cathedral set had — voicing + a night switch */
+  .tone-row{display:flex; justify-content:center; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;
+    border-top:1px solid rgba(216,178,90,.18); padding-top:12px;}
+  .tone-label{font-size:9px; letter-spacing:3px; color:#9a7f57; font-weight:700; text-transform:uppercase;}
+  .tone-seg{display:flex; border:1px solid rgba(216,178,90,.55); border-radius:22px; overflow:hidden;}
+  .tone-btn{min-height:38px; padding:7px 13px; cursor:pointer; border:none;
+    font-family:Georgia,'Times New Roman',serif; font-size:12.5px; font-weight:700; letter-spacing:.4px;
+    color:#c9ab74; background:rgba(52,34,14,.85);}
+  .tone-btn + .tone-btn{border-left:1px solid rgba(216,178,90,.35);}
+  .tone-btn:focus-visible{outline:2px solid #ffd98a; outline-offset:2px;}
+  .tone-btn.active{color:#1d1105; background:linear-gradient(180deg,#e6c877,#a37c34);}
+  .tone-night{border:1px solid rgba(216,178,90,.55); border-radius:22px;}
+  .tone-night.active{color:#ffe9bb; background:linear-gradient(180deg,#4a5a8a,#2c3a5e);
+    border-color:rgba(160,180,255,.6); box-shadow:0 0 10px rgba(120,140,255,.35);}
   .now-special[hidden]{display:none;}
   .now-special{display:inline-block; margin-top:8px; padding:2px 10px; border-radius:20px;
     font-size:10px; letter-spacing:2px; font-weight:700; color:#1d1105;
@@ -345,6 +359,8 @@
     .now-show{font-size:16px;}
     .now-controls{margin-top:8px;}
     .now-btn{min-height:36px; padding:6px 10px; font-size:12px;}
+    .tone-row{margin-top:8px; padding-top:8px;}
+    .tone-btn{min-height:34px; padding:5px 10px; font-size:11.5px;}
     footer{margin-top:12px; font-size:11px; line-height:1.6;}
   }
   @media (prefers-reduced-motion:reduce){
@@ -470,6 +486,15 @@
       <button class="now-btn" id="btnAnother" aria-label="Another episode from this station">Another episode</button>
     </div>
     <div class="now-times"><span id="timeElapsed"></span><span id="timeRemain"></span></div>
+    <div class="tone-row">
+      <span class="tone-label">Tone</span>
+      <div class="tone-seg" role="group" aria-label="Tone">
+        <button class="tone-btn" data-tone="mellow">Mellow</button>
+        <button class="tone-btn" data-tone="full">Full</button>
+        <button class="tone-btn" data-tone="clear">Clear</button>
+      </div>
+      <button class="tone-btn tone-night" id="btnNight" aria-pressed="false" aria-label="Night mode: tames loud peaks for low listening">☾ Night</button>
+    </div>
   </section>
 
   <footer>
@@ -482,6 +507,6 @@
 </main>
 
 <audio id="player" preload="none" crossorigin="anonymous"></audio>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
