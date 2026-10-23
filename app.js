@@ -64,12 +64,14 @@
     resumeMap[name] = { url: curEp.url, title: curEp.title, date: curEp.date, pos: Math.floor(pos), dur: isFinite(dur) ? Math.floor(dur) : 0, ts: Date.now() };
     saveState();
   }
-  /* episode-list cache (localStorage) so the first tune is fast */
+  /* episode-list cache (localStorage) so the first tune is fast.
+     v2: the Suspense and Benny shelves were widened (pass 6) — the old key
+     would have kept serving the narrow lists forever, so it was retired. */
   try {
-    var c = JSON.parse(localStorage.getItem("cathedral_eps_v1") || "{}");
+    var c = JSON.parse(localStorage.getItem("cathedral_eps_v2") || "{}");
     if (c && typeof c === "object") epCache = c;
   } catch (e) {}
-  function persistEpCache() { try { localStorage.setItem("cathedral_eps_v1", JSON.stringify(epCache)); } catch (e) {} }
+  function persistEpCache() { try { localStorage.setItem("cathedral_eps_v2", JSON.stringify(epCache)); } catch (e) {} }
 
   /* ---------- knob tick rings (11 ticks, majors at the ends and centre) ---------- */
   document.querySelectorAll("[data-ticks]").forEach(function (box) {
@@ -425,8 +427,16 @@
         .catch(function () {})
         .then(function () {
           if (--pending === 0) {
-            all.sort(function (a, b) { return a.url < b.url ? -1 : 1; });
-            epCache[st.name] = all; persistEpCache(); done(all);
+            /* one episode can live in two collections (Benny's guest-star
+               sets overlap its year ranges) — shelve each story once */
+            var seen = {}, deduped = [];
+            all.forEach(function (ep) {
+              var key = ep.title ? ep.title.toLowerCase() + "|" + ep.date : ep.url;
+              if (seen[key]) return;
+              seen[key] = 1; deduped.push(ep);
+            });
+            deduped.sort(function (a, b) { return a.url < b.url ? -1 : 1; });
+            epCache[st.name] = deduped; persistEpCache(); done(deduped);
           }
         });
     });
