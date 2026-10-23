@@ -101,7 +101,7 @@
   .dial-glass{
     position:relative;
     border-radius:128px 128px 8px 8px / 62px 62px 8px 8px;
-    padding:12px 10px 6px;
+    padding:12px 10px 11px;
     background:
       linear-gradient(115deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.04) 30%, rgba(255,255,255,0) 46%),
       radial-gradient(95% 130% at 50% 64%, #ffdc96 0%, #f4bf5a 42%, #e09831 74%, #b96f1d 100%);
@@ -135,6 +135,11 @@
   .dial-freq{position:relative; z-index:1; display:flex; justify-content:space-between;
     padding:1px 8px 0; font-size:8.5px; font-weight:700; letter-spacing:1px; color:rgba(74,44,8,.85);}
   .dial-freq-cap{text-align:center; font-size:7.5px; letter-spacing:3.5px; color:rgba(74,44,8,.7); font-weight:700; margin-top:1px;}
+  /* episode progress: a hairline of light along the foot of the dial glass */
+  .dial-progress{position:absolute; left:12px; right:12px; bottom:4px; height:3px; border-radius:2px;
+    background:rgba(74,44,8,.35); overflow:hidden; z-index:2;}
+  .dial-progress i{display:block; height:100%; width:0%; border-radius:2px;
+    background:linear-gradient(90deg,#a01818,#d84a2e); box-shadow:0 0 5px rgba(216,74,46,.7);}
   .dial-ticks{position:absolute; left:4px; right:4px; bottom:2px; height:9px;}
   .dial-ticks i{position:absolute; bottom:0; width:2px; height:9px; border-radius:1px;
     background:rgba(74,44,8,.8); transform:translateX(-50%);}
@@ -279,6 +284,19 @@
   .now-tag{font-size:13px; font-style:italic; color:#c9ab74; margin-top:2px;}
   .now-ep{font-size:14.5px; color:#efe3c8; margin-top:9px; line-height:1.45;}
   .now-date{font-size:12px; color:#9a7f57; margin-top:2px; letter-spacing:.4px;}
+  .now-controls{display:flex; justify-content:center; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .now-btn{min-height:42px; padding:8px 13px; border-radius:24px; cursor:pointer;
+    font-family:Georgia,'Times New Roman',serif; font-size:13px; font-weight:700; letter-spacing:.4px;
+    color:#ffd98a; background:linear-gradient(180deg, rgba(90,62,28,.9), rgba(52,34,14,.9));
+    border:1px solid rgba(216,178,90,.55);
+    box-shadow:inset 0 1px 0 rgba(255,240,200,.25), 0 3px 8px rgba(0,0,0,.45);}
+  .now-btn:active{transform:translateY(1px);}
+  .now-btn:focus-visible{outline:2px solid #ffd98a; outline-offset:2px;}
+  .now-btn:disabled{opacity:.38; cursor:default; transform:none;}
+  .now-btn.now-play{min-width:58px; font-size:15px; color:#1d1105;
+    background:linear-gradient(180deg,#e6c877,#a37c34); border-color:#d8b25e;}
+  .now-times{display:flex; justify-content:space-between; margin-top:8px;
+    font-size:11.5px; color:#9a7f57; letter-spacing:.6px; min-height:14px;}
   .now-special[hidden]{display:none;}
   .now-special{display:inline-block; margin-top:8px; padding:2px 10px; border-radius:20px;
     font-size:10px; letter-spacing:2px; font-weight:700; color:#1d1105;
@@ -325,6 +343,8 @@
     .nameplate span{font-size:10px; padding:4px 14px 3px;}
     .now-card{margin-top:10px; padding:9px 12px 8px;}
     .now-show{font-size:16px;}
+    .now-controls{margin-top:8px;}
+    .now-btn{min-height:36px; padding:6px 10px; font-size:12px;}
     footer{margin-top:12px; font-size:11px; line-height:1.6;}
   }
   @media (prefers-reduced-motion:reduce){
@@ -354,6 +374,7 @@
         </div>
         <div class="dial-freq" aria-hidden="true"><span>55</span><span>70</span><span>90</span><span>110</span><span>140</span><span>160</span></div>
         <div class="dial-freq-cap" aria-hidden="true">KILOCYCLES</div>
+        <div class="dial-progress" aria-hidden="true"><i id="dialProgressFill"></i></div>
       </div>
       <div class="dial-status" id="dialStatus" role="status">The set is dark. Turn it on.</div>
     </div>
@@ -442,6 +463,13 @@
     <div class="now-ep" id="nowEp"></div>
     <div class="now-date" id="nowDate"></div>
     <div><span class="now-special" id="nowSpecial" hidden>Halloween Special</span></div>
+    <div class="now-controls">
+      <button class="now-btn" id="btnBack30" aria-label="Back 30 seconds">↩ 30s</button>
+      <button class="now-btn now-play" id="btnPlayPause" aria-label="Pause">❚❚</button>
+      <button class="now-btn" id="btnFwd30" aria-label="Forward 30 seconds">30s ↪</button>
+      <button class="now-btn" id="btnAnother" aria-label="Another episode from this station">Another episode</button>
+    </div>
+    <div class="now-times"><span id="timeElapsed"></span><span id="timeRemain"></span></div>
   </section>
 
   <footer>
@@ -454,6 +482,6 @@
 </main>
 
 <audio id="player" preload="none" crossorigin="anonymous"></audio>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

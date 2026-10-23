@@ -13,6 +13,10 @@
       pow = $("btnPower");
   var nowCard = $("nowCard"), nowShow = $("nowShow"), nowTag = $("nowTag"),
       nowEp = $("nowEp"), nowDate = $("nowDate"), nowSpecial = $("nowSpecial");
+  var progressFill = $("dialProgressFill"),
+      btnBack30 = $("btnBack30"), btnPlayPause = $("btnPlayPause"),
+      btnFwd30 = $("btnFwd30"), btnAnother = $("btnAnother"),
+      timeElapsed = $("timeElapsed"), timeRemain = $("timeRemain");
 
   var stations = [], curIdx = -1, powerOn = false, isPlaying = false;
   var ticksBox = $("dialTicks");
@@ -382,6 +386,7 @@
         });
       } catch (e) {}
     }
+    syncTransport();
   }
   if ("mediaSession" in navigator) {
     try {
@@ -389,8 +394,69 @@
       navigator.mediaSession.setActionHandler("pause", function () { player.pause(); });
       navigator.mediaSession.setActionHandler("nexttrack", function () { if (powerOn) tuneTo(curIdx + 1); });
       navigator.mediaSession.setActionHandler("previoustrack", function () { if (powerOn) tuneTo(curIdx - 1); });
+      navigator.mediaSession.setActionHandler("seekbackward", function () { seekBy(-30); });
+      navigator.mediaSession.setActionHandler("seekforward", function () { seekBy(30); });
     } catch (e) {}
   }
+
+  /* ---------- transport: pause, ±30 seconds, another episode, progress ---------- */
+  function fmtTime(t) {
+    if (!isFinite(t) || t < 0) t = 0;
+    t = Math.floor(t);
+    var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+    return (h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function syncTransport() {
+    var have = !!(powerOn && curEp && player.src);
+    btnBack30.disabled = !have; btnFwd30.disabled = !have;
+    btnPlayPause.disabled = !have; btnAnother.disabled = !(powerOn && curIdx >= 0);
+    var paused = player.paused;
+    btnPlayPause.textContent = paused ? "▶" : "❚❚";
+    btnPlayPause.setAttribute("aria-label", paused ? "Play" : "Pause");
+    if (!have) {
+      progressFill.style.width = "0%";
+      timeElapsed.textContent = ""; timeRemain.textContent = "";
+    }
+  }
+  function paintProgress() {
+    var d = player.duration;
+    if (isFinite(d) && d > 0) {
+      progressFill.style.width = Math.min(100, (player.currentTime / d) * 100) + "%";
+      timeElapsed.textContent = fmtTime(player.currentTime);
+      timeRemain.textContent = "−" + fmtTime(d - player.currentTime) + " left";
+    }
+  }
+  function togglePlay() {
+    if (!powerOn || !curEp) return;
+    if (player.paused) {
+      var pr = player.play();
+      if (pr && pr.catch) pr.catch(function () {});
+    } else {
+      player.pause();
+      status.textContent = stations[curIdx].name + " — paused. It'll keep your place.";
+    }
+  }
+  function seekBy(sec) {
+    if (!powerOn || !curEp) return;
+    var d = player.duration;
+    var t = (player.currentTime || 0) + sec;
+    if (t < 0) t = 0;
+    if (isFinite(d) && d > 0 && t > d - 2) t = Math.max(0, d - 2);
+    try { player.currentTime = t; } catch (e) {}
+    paintProgress();
+  }
+  btnPlayPause.addEventListener("click", function (e) { e.stopPropagation(); click(800); togglePlay(); });
+  btnBack30.addEventListener("click", function (e) { e.stopPropagation(); click(700); seekBy(-30); });
+  btnFwd30.addEventListener("click", function (e) { e.stopPropagation(); click(700); seekBy(30); });
+  btnAnother.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (!powerOn || curIdx < 0) return;
+    click(900); failStreak = 0; tuneTo(curIdx);
+  });
+  /* tapping the card itself (not a button) pauses or resumes */
+  nowCard.addEventListener("click", function () { togglePlay(); });
+  player.addEventListener("timeupdate", paintProgress);
+  player.addEventListener("loadedmetadata", function () { paintProgress(); syncTransport(); });
 
   /* ---------- failure handling: three tries, then plain words ---------- */
   function handleFail() {
@@ -483,6 +549,7 @@
 
   function tuneTo(idx) {
     if (!powerOn || !stations.length) return;
+    var prevUrl = curEp ? curEp.url : "";
     whistleOff();
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
     saveState();
@@ -511,7 +578,9 @@
     fetchEpisodes(curIdx, function (eps) {
       if (gen !== tuneGen || !powerOn) return;
       if (!eps.length) { handleFail(); return; }
-      var ep = eps[Math.floor(Math.random() * eps.length)];
+      /* never serve the same episode twice running when the shelf has more */
+      var ep = eps[Math.floor(Math.random() * eps.length)], tries = 0;
+      while (eps.length > 1 && ep.url === prevUrl && tries < 4) { ep = eps[Math.floor(Math.random() * eps.length)]; tries++; }
       curEp = ep; updateNowCard();
       player.src = ep.url;
       try {
@@ -531,10 +600,12 @@
     var st = stations[curIdx];
     if (st) status.textContent = st.name + " — on the air.";
     updateNowCard();
+    syncTransport();
     if ("mediaSession" in navigator) { try { navigator.mediaSession.playbackState = "playing"; } catch (e) {} }
   });
   player.addEventListener("pause", function () {
     isPlaying = false;
+    syncTransport();
     if ("mediaSession" in navigator) { try { navigator.mediaSession.playbackState = "paused"; } catch (e) {} }
   });
   player.addEventListener("waiting", function () { if (powerOn) hiss(0.08); });
@@ -673,6 +744,7 @@
       document.body.classList.remove("listening");
       status.textContent = "The set is dark. Turn it on.";
       nowCard.hidden = true;
+      progressFill.style.width = "0%"; timeElapsed.textContent = ""; timeRemain.textContent = "";
       if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
     } else {
       powerOn = true;
