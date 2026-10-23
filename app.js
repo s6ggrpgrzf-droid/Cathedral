@@ -13,6 +13,9 @@
       pow = $("btnPower");
   var nowCard = $("nowCard"), nowShow = $("nowShow"), nowTag = $("nowTag"),
       nowEp = $("nowEp"), nowDate = $("nowDate"), nowSpecial = $("nowSpecial");
+  var grilleEl = document.querySelector(".grille"),
+      fretEl = document.querySelector(".grille .fret"),
+      dialGlassEl = dial.querySelector(".dial-glass");
   var progressFill = $("dialProgressFill"),
       btnBack30 = $("btnBack30"), btnPlayPause = $("btnPlayPause"),
       btnFwd30 = $("btnFwd30"), btnAnother = $("btnAnother"),
@@ -94,8 +97,11 @@
   }
   function drawEye(s) { eyeBase = s; drawEyeRaw(s); }
   drawEye(0.15);
-  /* flutter loop: the wedge breathes with the broadcast level (AnalyserNode) */
-  var analyser = null, eyeData = null;
+  /* the set is alive: the eye flutters, the cloth breathes, and the dial
+     lamp warms with the signal. The analyser sits AFTER the shortwave fade
+     stage in the chain, so everything here rises and sags with the broadcast
+     itself — a fade dip cools the glass all on its own. */
+  var analyser = null, eyeData = null, breathShown = 0, glowShown = 0.5;
   (function eyeLoop() {
     requestAnimationFrame(eyeLoop);
     if (!powerOn || REDUCED || !analyser) return;
@@ -107,6 +113,15 @@
     var target = Math.min(1, Math.max(0, eyeBase * (0.88 + Math.min(0.5, rms * 2.6))));
     eyeShown += (target - eyeShown) * 0.35;
     drawEyeRaw(eyeShown);
+    /* cloth: heavy and slow, a swell under the program — never a pulse you can point at */
+    var sig = isPlaying ? Math.min(1, rms * 2.4) : 0;
+    breathShown += (sig - breathShown) * 0.10;
+    fretEl.style.transform = "scale(" + (1 + breathShown * 0.018).toFixed(4) + ")";
+    grilleEl.style.transform = "scale(" + (1 + breathShown * 0.004).toFixed(4) + ")";
+    /* lamp: thermal inertia — warms as the signal strengthens, cools as it fades */
+    var glowTarget = isPlaying ? Math.min(1, 0.18 + rms * 2.4) : eyeBase * 0.65;
+    glowShown += (glowTarget - glowShown) * 0.05;
+    dialGlassEl.style.setProperty("--glow", glowShown.toFixed(3));
   })();
 
   /* ---------- audio: ONE master gain rules every sound on the set ----------
@@ -854,6 +869,9 @@
       status.textContent = "The set is dark. Turn it on.";
       nowCard.hidden = true;
       progressFill.style.width = "0%"; timeElapsed.textContent = ""; timeRemain.textContent = "";
+      breathShown = 0; glowShown = 0.5;   // the set settles as it goes dark
+      fretEl.style.transform = ""; grilleEl.style.transform = "";
+      dialGlassEl.style.setProperty("--glow", "0.5");
       if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
     } else {
       powerOn = true;
@@ -917,6 +935,8 @@
     get vol() { return volLevel; },
     get tone() { return toneMode; },
     get night() { return nightOn; },
+    get breath() { return breathShown; },
+    get glow() { return glowShown; },
     get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
     tune: tuneTo,

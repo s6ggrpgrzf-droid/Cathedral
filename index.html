@@ -122,7 +122,12 @@
       inset 0 -10px 20px rgba(100,48,0,.38),
       inset 10px 0 18px rgba(110,54,0,.22),
       inset -10px 0 18px rgba(110,54,0,.22),
-      0 0 30px rgba(255,180,80,.5);}   /* the soft amber glow off the glass */
+      /* the lamp's glow, driven live by signal strength (--glow from app.js) */
+      0 0 calc(14px + var(--glow, .5) * 28px) rgba(255,180,80, calc(.20 + var(--glow, .5) * .42));}
+  /* lamp hotspot on the glass, brightening with the same signal */
+  .dial-glass::before{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:radial-gradient(58% 44% at 50% 16%, rgba(255,242,205,.55), transparent 70%);
+    opacity:calc(.18 + var(--glow, .5) * .55);}
   .dial-arc{position:absolute; left:6px; right:6px; top:16px; height:52px; width:calc(100% - 12px); z-index:0; pointer-events:none;}
   .dial-band{position:relative; height:66px; z-index:1;}
   .dial-labels{position:absolute; inset:0; z-index:2;}
@@ -199,7 +204,7 @@
     box-shadow:inset 0 3px 14px rgba(0,0,0,.75), inset 0 0 34px rgba(0,0,0,.5);
     overflow:hidden;
   }
-  .grille .fret{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .grille .fret{position:absolute; inset:0; width:100%; height:100%; display:block; transform-origin:50% 55%;}
   .grille::after{content:""; position:absolute; inset:0; pointer-events:none;
     background:radial-gradient(60% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
 
@@ -507,6 +512,6 @@
 </main>
 
 <audio id="player" preload="none" crossorigin="anonymous"></audio>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
