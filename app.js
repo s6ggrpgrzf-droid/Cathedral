@@ -24,6 +24,9 @@
   var tuneGen = 0;           // guards async races while tuning
   var failStreak = 0;        // consecutive failed streams (cap: 3 tries)
   var curEp = null;
+  var pendingSeek = 0;       // resume position to apply when the episode's metadata lands
+  var resumeUsed = false;    // the current episode was resumed, not freshly drawn
+  var epPlayed = false;      // the current episode has actually sounded (guards resume saves)
   var eyeGlass = $("eyeGlass"), eyeWedge = $("eyeWedge");
 
   /* ---------- remembered station & volume ---------- */
@@ -31,11 +34,28 @@
   try { saved = JSON.parse(localStorage.getItem("cathedral_state_v1") || "{}") || {}; } catch (e) { saved = {}; }
   var volLevel = (typeof saved.vol === "number") ? Math.min(1, Math.max(0, saved.vol)) : 0.75;
   var muted = !!saved.muted;
+  /* resume map: station name -> {url,title,date,pos,dur,ts} — the episode in
+     progress on that station and where you left it. Entries die at 30 days. */
+  var resumeMap = (saved.resume && typeof saved.resume === "object") ? saved.resume : {};
+  (function pruneResume() {
+    var cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+    Object.keys(resumeMap).forEach(function (k) { if (!resumeMap[k] || (resumeMap[k].ts || 0) < cutoff) delete resumeMap[k]; });
+  })();
   function saveState() {
     try {
       var name = (curIdx >= 0 && stations[curIdx]) ? stations[curIdx].name : saved.station;
-      localStorage.setItem("cathedral_state_v1", JSON.stringify({ station: name, vol: volLevel, muted: muted }));
+      localStorage.setItem("cathedral_state_v1", JSON.stringify({ station: name, vol: volLevel, muted: muted, resume: resumeMap }));
     } catch (e) {}
+  }
+  function saveResume() {
+    if (!powerOn || curIdx < 0 || !stations[curIdx] || !curEp) return;
+    var name = stations[curIdx].name, pos = player.currentTime, dur = player.duration;
+    if (!isFinite(pos)) return;
+    if (!epPlayed && pos < 8) return;                                          // never actually played: leave any saved place untouched
+    if (pos < 8) { delete resumeMap[name]; saveState(); return; }              // played but barely started: nothing to resume
+    if (isFinite(dur) && dur > 0 && pos > dur - 20) { delete resumeMap[name]; saveState(); return; }  // effectively finished
+    resumeMap[name] = { url: curEp.url, title: curEp.title, date: curEp.date, pos: Math.floor(pos), dur: isFinite(dur) ? Math.floor(dur) : 0, ts: Date.now() };
+    saveState();
   }
   /* episode-list cache (localStorage) so the first tune is fast */
   try {
@@ -451,12 +471,24 @@
   btnAnother.addEventListener("click", function (e) {
     e.stopPropagation();
     if (!powerOn || curIdx < 0) return;
-    click(900); failStreak = 0; tuneTo(curIdx);
+    click(900); failStreak = 0; tuneTo(curIdx, { fresh: true });
   });
   /* tapping the card itself (not a button) pauses or resumes */
   nowCard.addEventListener("click", function () { togglePlay(); });
   player.addEventListener("timeupdate", paintProgress);
-  player.addEventListener("loadedmetadata", function () { paintProgress(); syncTransport(); });
+  /* keep the resume point warm while listening (throttled — localStorage is cheap, but not 4× a second) */
+  var lastResumeSave = 0;
+  player.addEventListener("timeupdate", function () {
+    if (!isPlaying) return;
+    var now = Date.now();
+    if (now - lastResumeSave > 5000) { lastResumeSave = now; saveResume(); }
+  });
+  player.addEventListener("loadedmetadata", function () {
+    if (pendingSeek > 0) { try { player.currentTime = pendingSeek; } catch (e) {} pendingSeek = 0; }
+    paintProgress(); syncTransport();
+  });
+  document.addEventListener("visibilitychange", function () { if (document.hidden) saveResume(); });
+  window.addEventListener("pagehide", saveResume);
 
   /* ---------- failure handling: three tries, then plain words ---------- */
   function handleFail() {
@@ -547,8 +579,9 @@
     startChase();
   }
 
-  function tuneTo(idx) {
+  function tuneTo(idx, opts) {
     if (!powerOn || !stations.length) return;
+    saveResume();   // wherever we were, the old station keeps its place
     var prevUrl = curEp ? curEp.url : "";
     whistleOff();
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
@@ -563,6 +596,7 @@
     player.pause();
     hiss(0.16);
     drawEye(0.5);
+    resumeUsed = false; pendingSeek = 0; epPlayed = false;
     curEp = null; updateNowCard();
     if (ghostIdx === curIdx && ghost && ghost.src && ghost.readyState >= 2) {
       try {
@@ -578,11 +612,26 @@
     fetchEpisodes(curIdx, function (eps) {
       if (gen !== tuneGen || !powerOn) return;
       if (!eps.length) { handleFail(); return; }
-      /* never serve the same episode twice running when the shelf has more */
-      var ep = eps[Math.floor(Math.random() * eps.length)], tries = 0;
-      while (eps.length > 1 && ep.url === prevUrl && tries < 4) { ep = eps[Math.floor(Math.random() * eps.length)]; tries++; }
+      /* resume first: an episode in progress on this station, left part-way,
+         beats a fresh draw — unless "another episode" was asked for plainly */
+      var ep = null;
+      if ((!opts || !opts.fresh) && resumeMap[st.name]) {
+        var cand = resumeMap[st.name];
+        for (var ri = 0; ri < eps.length; ri++) {
+          if (eps[ri].url === cand.url && cand.pos >= 8 && (!cand.dur || cand.pos < cand.dur - 20)) {
+            ep = eps[ri]; pendingSeek = cand.pos; resumeUsed = true; break;
+          }
+        }
+      }
+      if (!ep) {
+        /* never serve the same episode twice running when the shelf has more */
+        ep = eps[Math.floor(Math.random() * eps.length)];
+        var tries = 0;
+        while (eps.length > 1 && ep.url === prevUrl && tries < 4) { ep = eps[Math.floor(Math.random() * eps.length)]; tries++; }
+      }
       curEp = ep; updateNowCard();
       player.src = ep.url;
+      if (pendingSeek > 0) { try { player.currentTime = pendingSeek; } catch (e) {} }
       try {
         var pr = player.play();
         if (pr && pr.catch) pr.catch(function () { if (gen === tuneGen) status.textContent = "Tap the dial to listen."; });
@@ -592,19 +641,21 @@
 
   player.addEventListener("playing", function () {
     if (!powerOn) return;
-    isPlaying = true; failStreak = 0;
+    isPlaying = true; epPlayed = true; failStreak = 0;
     hiss(0);
     if (humNodes) humNodes.stop();
     drawEye(1);
     document.body.classList.add("listening");
     var st = stations[curIdx];
-    if (st) status.textContent = st.name + " — on the air.";
+    if (st) status.textContent = resumeUsed ? st.name + " — back where you left it." : st.name + " — on the air.";
+    resumeUsed = false;
     updateNowCard();
     syncTransport();
     if ("mediaSession" in navigator) { try { navigator.mediaSession.playbackState = "playing"; } catch (e) {} }
   });
   player.addEventListener("pause", function () {
     isPlaying = false;
+    saveResume();
     syncTransport();
     if ("mediaSession" in navigator) { try { navigator.mediaSession.playbackState = "paused"; } catch (e) {} }
   });
@@ -618,6 +669,7 @@
     /* station break: a breath of static, the chime, then the next episode */
     if (!powerOn) return;
     isPlaying = false;
+    if (stations[curIdx]) { delete resumeMap[stations[curIdx].name]; saveState(); }   // finished: no resuming a done episode
     var g0 = tuneGen, idx = curIdx;
     hiss(0.15, 0.1);
     status.textContent = "A word from our sponsor…";
@@ -731,6 +783,7 @@
   pow.addEventListener("click", function () {
     thunk();
     if (powerOn) {
+      saveResume();   // powering down leaves every station where it was
       powerOn = false; isPlaying = false;
       tuneGen++;
       player.pause();
