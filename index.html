@@ -299,9 +299,11 @@
     border-radius:8px; text-align:center; color:#2e1c08;
     background:
       repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 2px, rgba(59,38,8,.028) 2px 4px),
-      radial-gradient(120% 90% at 50% 0%, rgba(255,244,205,.35), rgba(255,244,205,0) 55%),
-      linear-gradient(172deg,#dcb96c 0%,#c49a48 48%,#a97f36 82%,#96702c 100%);
-    border:1px solid #6d5322;
+      radial-gradient(120% 90% at 50% 0%, rgba(255,244,205,.26), rgba(255,244,205,0) 55%),
+      radial-gradient(60% 50% at 12% 88%, rgba(70,45,10,.15), rgba(70,45,10,0) 60%),
+      radial-gradient(50% 42% at 88% 76%, rgba(70,45,10,.13), rgba(70,45,10,0) 60%),
+      linear-gradient(172deg,#c9a856 0%,#ac8438 48%,#8f6a2a 82%,#7d5c22 100%);
+    border:1px solid #5d431a;
     box-shadow:
       inset 0 1px 0 rgba(255,248,220,.8),
       inset 0 -2px 5px rgba(70,45,10,.5),
@@ -316,7 +318,7 @@
   .now-card[hidden]{display:none;}
   /* the screws holding the plate down — each one turned to its own angle */
   .screw{position:absolute; width:13px; height:13px; border-radius:50%; pointer-events:none; z-index:2;
-    background:radial-gradient(circle at 35% 30%, #f9e7ac, #cfa854 42%, #97742f 78%, #71551f);
+    background:radial-gradient(circle at 35% 30%, #f0da94, #bd9843 42%, #86652a 78%, #5f471a);
     box-shadow:inset 0 -1px 2px rgba(43,28,4,.65), inset 0 1px 1px rgba(255,252,230,.7), 0 1px 2px rgba(43,28,4,.55);}
   .screw::after{content:""; position:absolute; left:1.5px; right:1.5px; top:50%; height:2px; margin-top:-1px; border-radius:1px;
     background:linear-gradient(180deg,#33250b,#5d431a); box-shadow:0 1px 0 rgba(255,244,205,.45);
@@ -343,7 +345,7 @@
   .now-btn:focus-visible{outline:2px solid #3a2410; outline-offset:2px;}
   .now-btn:disabled{opacity:.38; cursor:default; transform:none;}
   .now-btn.now-play{min-width:58px; font-size:15px; color:#2a1a05;
-    background:linear-gradient(180deg,#caa252,#8f6a2a); border-color:#5d431a;
+    background:linear-gradient(180deg,#b8933e,#7d5c22); border-color:#4e3712;
     box-shadow:inset 0 1px 0 rgba(255,248,220,.75), inset 0 -2px 4px rgba(70,45,10,.55), 0 3px 8px rgba(59,38,8,.55);}
   .now-times{display:flex; justify-content:space-between; margin-top:8px;
     font-size:11.5px; color:#654a1e; letter-spacing:.6px; min-height:14px;}
@@ -359,7 +361,7 @@
     color:#e8cd8d; background:radial-gradient(130% 150% at 50% 0%, #43301b, #1d0f03 75%);}
   .tone-btn + .tone-btn{border-left:1px solid rgba(240,215,154,.22);}
   .tone-btn:focus-visible{outline:2px solid #3a2410; outline-offset:2px;}
-  .tone-btn.active{color:#2a1a05; background:linear-gradient(180deg,#caa252,#8f6a2a);}
+  .tone-btn.active{color:#2a1a05; background:linear-gradient(180deg,#b8933e,#7d5c22);}
   .tone-night{border:1px solid #140b02; border-radius:22px;}
   .tone-night.active{color:#ffe9bb; background:linear-gradient(180deg,#4a5a8a,#2c3a5e);
     border-color:rgba(24,34,72,.85); box-shadow:0 0 10px rgba(70,90,180,.45);}
