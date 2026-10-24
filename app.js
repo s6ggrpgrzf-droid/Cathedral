@@ -335,14 +335,104 @@
     }
     fadeTimer = setTimeout(fadeLoop, 900 + Math.random() * 1400);
   }
+  /* ---------- the hardware speaks: mechanical sounds, built from noise ----------
+     No samples: every switch, detent and relay is a short burst of the set's
+     own noise buffer shaped by filters (the snap), a few ringing resonances
+     (the metal), and sometimes a falling sine (the wooden body taking the
+     knock). Each one varies a little every time, the way a real part never
+     clicks the same twice. They run on their own bus under the master gain,
+     so they follow the Volume knob and fall silent with mute, and sit well
+     under the broadcast. */
+  var fxBus = null;
+  function fx() {
+    var a = ac(); if (!a) return null;
+    if (!fxBus) { fxBus = a.createGain(); fxBus.gain.value = 0.55; fxBus.connect(out()); }
+    return fxBus;
+  }
+  function vary(v, amt) { return v * (1 + (Math.random() * 2 - 1) * (amt || 0.06)); }
+  /* one noise transient: filter chain → envelope (sub-millisecond attack) */
+  function burst(t, o) {
+    var a = AC, bus = fx(); if (!a || !bus || !noiseBuf) return;
+    var s = a.createBufferSource(); s.buffer = noiseBuf;
+    var node = s;
+    if (o.hp) { var h = a.createBiquadFilter(); h.type = "highpass"; h.frequency.value = o.hp; node.connect(h); node = h; }
+    var g = a.createGain();
+    if (o.bands) {
+      o.bands.forEach(function (b) {
+        var f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = vary(b[0], 0.04); f.Q.value = b[1];
+        var bg = a.createGain(); bg.gain.value = b[2];
+        node.connect(f); f.connect(bg); bg.connect(g);
+      });
+    } else node.connect(g);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(o.amp, t + (o.att || 0.0006));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + o.dec);
+    g.connect(bus);
+    s.start(t, Math.random() * 1.8); s.stop(t + o.dec + 0.03);
+  }
+  /* the body: a short falling sine, the cabinet or the knob shaft taking the knock */
+  function body(t, f0, f1, amp, dec) {
+    var a = AC, bus = fx(); if (!a || !bus) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dec * 0.7);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+    o.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + dec + 0.03);
+  }
+  /* a button key going down: a dry snap voiced by the key (freq keeps the
+     old call sites' character: low = soft, high = bright) and a little body */
   function click(freq) {
     var a = ac(); if (!a) return;
-    var o = a.createOscillator(), g = a.createGain();
-    o.type = "square"; o.frequency.value = freq || 700;
-    g.gain.setValueAtTime(0.05, a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.05);
-    o.connect(g); g.connect(out());
-    o.start(); o.stop(a.currentTime + 0.07);
+    var t = a.currentTime, f = freq || 700;
+    burst(t, { hp: 600, bands: [[vary(f * 2.6), 2.2, 1], [vary(f * 5.1), 7, 0.45]], amp: 0.22, dec: 0.022 });
+    body(t, vary(f * 0.42), f * 0.3, 0.05, 0.03);
+  }
+  /* a detent: the knob's spring-loaded ball dropping into the next notch.
+     Tiny, bright and dry; `w` (0…1) is how hard it lands */
+  var lastDetent = 0;
+  function detent(w) {
+    var a = AC; if (!a) return;
+    var now = a.currentTime;
+    if (now - lastDetent < 0.026) return;   // a fast spin blurs into a purr, not a machine gun
+    lastDetent = now;
+    var k = w == null ? 0.6 : w;
+    burst(now, { hp: 1800, bands: [[3900, 6, 1], [6800, 9, 0.5]], amp: 0.09 + 0.13 * k, dec: 0.009 + 0.006 * k });
+    body(now, vary(1150), 700, 0.012 + 0.018 * k, 0.014);
+  }
+  /* the power switch: a heavy rotary snap — the throw, the contacts' metal
+     ring, the cabinet's thump, and the rocker settling a beat later */
+  function thunk(goingOn) {
+    var a = ac(); if (!a) return;
+    var t = a.currentTime, on = goingOn !== false;
+    burst(t, { hp: 300, bands: [[vary(on ? 1450 : 1200), 1.3, 1], [vary(3100), 22, 0.6], [vary(4700), 28, 0.4]], amp: 0.42, dec: 0.085 });
+    body(t + 0.001, on ? 128 : 108, on ? 52 : 46, 0.30, 0.16);
+    burst(t + vary(0.034, 0.15), { hp: 2200, bands: [[vary(5200), 10, 1]], amp: 0.07, dec: 0.012 });
+  }
+  /* the B+ relay pulling in as the rectifier warms: tick-tack, then quiet */
+  function relayTick() {
+    var a = ac(); if (!a) return;
+    var t = a.currentTime;
+    burst(t, { hp: 1200, bands: [[vary(2600), 9, 1], [vary(5900), 14, 0.5]], amp: 0.2, dec: 0.016 });
+    burst(t + vary(0.019, 0.12), { hp: 1600, bands: [[vary(3400), 11, 1], [vary(7200), 16, 0.4]], amp: 0.12, dec: 0.012 });
+    body(t, 210, 150, 0.035, 0.03);
+  }
+  /* haptics, where the hand can feel them (feature-detected; silently absent on iOS) */
+  var canBuzz = typeof navigator.vibrate === "function", lastBuzz = 0;
+  function buzz(ms, force) {
+    if (!canBuzz) return;
+    var now = Date.now();
+    if (!force && now - lastBuzz < 45) return;
+    lastBuzz = now;
+    try { navigator.vibrate(ms); } catch (e) {}
+  }
+  /* a station drops into place: a deeper notch you can feel */
+  function lockFeel() {
+    if (AC) { lastDetent = 0; detent(1); body(AC.currentTime, 420, 220, 0.03, 0.04); }
+    buzz(12, true);
   }
   /* station-break chime: three soft bell tones, the way the networks signed a break */
   function chime() {
@@ -429,17 +519,6 @@
     var v = ratio < 0.55 ? Math.pow(1 - ratio / 0.55, 2) * 0.32 : 0;
     if (ghostGain && AC) { if (Math.abs(v - ghostGain.gain.value) > 0.015) ghostSet(v); }
     else if (Math.abs(v - ghost.volume) > 0.015) ghost.volume = v;
-  }
-  function thunk() {
-    var a = ac(); if (!a) return;
-    var o = a.createOscillator(), g = a.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(110, a.currentTime);
-    o.frequency.exponentialRampToValueAtTime(40, a.currentTime + 0.16);
-    g.gain.setValueAtTime(0.2, a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.2);
-    o.connect(g); g.connect(out());
-    o.start(); o.stop(a.currentTime + 0.22);
   }
 
   /* ---------- episode lists: fetched once per station, then cached ---------- */
@@ -682,8 +761,16 @@
     stationReadout.className = "dial-station" + (mode ? " " + mode : "");
   }
 
+  /* detents: the tuning shaft has 27 notches across its sweep */
+  var DETENT = 74 / 27, lastNotch = null;
+  function notchTick() {
+    var n = Math.round((sweepPos - 13) / DETENT);
+    if (lastNotch !== null && n !== lastNotch && (sweeping || chaseOn)) { detent(0.55); buzz(3); }
+    lastNotch = n;
+  }
   function paintNeedle() {
     needle.style.left = sweepPos + "%";
+    notchTick();
     paintReadout();
     /* the tuning knob turns LIVE with the needle, not only at lock */
     if (stations.length > 1) tunePtr.style.transform = "rotate(" + (-135 + ((sweepPos - 13) / 74) * 270) + "deg)";
@@ -705,7 +792,7 @@
       sweepPos = sweepTarget; sweepVel = 0; chaseOn = false;
       needle.style.transition = "";
       paintNeedle();
-      if (!sweeping && lockIdx >= 0) { var li = lockIdx; lockIdx = -1; tuneTo(li); }
+      if (!sweeping && lockIdx >= 0) { var li = lockIdx; lockIdx = -1; lockFeel(); tuneTo(li); }
       return;
     }
     sweepVel += (sweepTarget - sweepPos) * 0.16;
@@ -721,7 +808,7 @@
       sweepPos = sweepTarget;
       paintNeedle();
       needle.style.transition = "";
-      if (!sweeping && lockIdx >= 0) { var li2 = lockIdx; lockIdx = -1; tuneTo(li2); }
+      if (!sweeping && lockIdx >= 0) { var li2 = lockIdx; lockIdx = -1; lockFeel(); tuneTo(li2); }
     }
   }
   function startChase() {
@@ -752,6 +839,7 @@
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
     saveState();
     sweepPos = stationPos(curIdx); sweepTarget = sweepPos; sweepVel = 0;
+    lastNotch = Math.round((sweepPos - 13) / DETENT);
     var st = stations[curIdx], gen = ++tuneGen;
     needle.style.left = sweepPos + "%";
     tunePtr.style.transform = "rotate(" + (-135 + (curIdx / Math.max(1, stations.length - 1)) * 270) + "deg)";
@@ -863,7 +951,7 @@
         el.removeEventListener("pointermove", mv);
         el.removeEventListener("pointerup", up);
         el.removeEventListener("pointercancel", up);
-        if (moved <= 4) { click(800); tuneTo(curIdx + 1); }
+        if (moved <= 4) { click(800); lockFeel(); tuneTo(curIdx + 1); }
         else sweepEnd();
       }
       el.addEventListener("pointermove", mv);
@@ -901,15 +989,19 @@
   }
   player.volume = 1;   // the element stays at full; the master gain does the work
   paintVol();
+  var volNotch = null;
   function setVol(v) {
     volLevel = Math.min(1, Math.max(0, v));
+    var vn = Math.round(volLevel * 20);
+    if (volNotch !== null && vn !== volNotch) { detent(0.35 + volLevel * 0.4); buzz(3); }
+    volNotch = vn;
     if (volLevel > 0) muted = false;
     applyMaster(); paintVol(); saveState();
   }
   volKnob.addEventListener("pointerdown", function (e) {
     try { volKnob.setPointerCapture(e.pointerId); } catch (err) {}
     var y0 = e.clientY, v0 = muted ? 0 : volLevel, moved = 0;
-    ac(); click(900);
+    ac(); click(900); volNotch = Math.round((muted ? 0 : volLevel) * 20);
     function mv(ev) {
       moved = Math.max(moved, Math.abs(ev.clientY - y0));
       setVol(v0 + (y0 - ev.clientY) / 170);
@@ -918,7 +1010,7 @@
       volKnob.removeEventListener("pointermove", mv);
       volKnob.removeEventListener("pointerup", up);
       volKnob.removeEventListener("pointercancel", up);
-      if (moved < 8) { muted = !muted; ac(); applyMaster(); click(muted ? 500 : 1000); paintVol(); saveState(); }
+      if (moved < 8) { muted = !muted; ac(); applyMaster(); click(muted ? 500 : 1000); buzz(8, true); paintVol(); saveState(); }
     }
     volKnob.addEventListener("pointermove", mv);
     volKnob.addEventListener("pointerup", up);
@@ -928,17 +1020,17 @@
   /* ---------- arrow keys work the focused knob ---------- */
   tuneKnob.addEventListener("keydown", function (e) {
     if (!powerOn) return;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); click(800); tuneTo(curIdx + 1); }
-    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); click(800); tuneTo(curIdx - 1); }
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); click(800); lockFeel(); tuneTo(curIdx + 1); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); click(800); lockFeel(); tuneTo(curIdx - 1); }
   });
   volKnob.addEventListener("keydown", function (e) {
-    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) + 0.05); click(1000); }
-    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) - 0.05); click(700); }
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) + 0.05); }   // the detent is the click
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) - 0.05); }
   });
 
   /* ---------- power ---------- */
   pow.addEventListener("click", function () {
-    thunk();
+    thunk(!powerOn); buzz(powerOn ? 14 : 20, true);
     if (powerOn) {
       saveResume();   // powering down leaves every station where it was
       powerOn = false; isPlaying = false;
@@ -971,6 +1063,7 @@
       pow.classList.add("on");
       status.textContent = "The tubes are warming…";
       humOn();
+      setTimeout(function () { if (powerOn) relayTick(); }, 720);   // the B+ relay pulls in
       /* the tubes heat: the broadcast fades from muffled to full over ~3 seconds */
       if (AC && warmLP) {
         warmLP.frequency.cancelScheduledValues(AC.currentTime);
@@ -1024,6 +1117,7 @@
     get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
     get readout() { return stationReadout.textContent + "|" + stationReadout.className; },
+    get fx() { return { bus: fx, detent: detent, thunk: thunk, relay: relayTick, click: click, lock: lockFeel }; },
     tune: tuneTo,
     power: function () { pow.click(); }
   };
