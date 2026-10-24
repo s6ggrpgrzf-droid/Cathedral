@@ -170,9 +170,13 @@
   .needle{
     position:absolute; top:-4px; bottom:-4px; width:2.5px; left:7%;
     background:#a01818; border-radius:2px; z-index:1;
-    box-shadow:0 0 6px rgba(160,24,24,.8), 0 0 2px rgba(0,0,0,.5);
-    transition:left .8s cubic-bezier(.6,0,.3,1);
+    /* a painted sliver of metal: on a dark set it casts no light of its own */
+    box-shadow:0 0 2px rgba(0,0,0,.45);
+    transition:left .8s cubic-bezier(.6,0,.3,1), box-shadow 1.6s ease;
   }
+  /* the red halo belongs to the dial lamp — it exists only while the set is on,
+     blooming in and fading out with the warm-up rather than snapping */
+  .dial.on .needle{box-shadow:0 0 6px rgba(160,24,24,.8), 0 0 2px rgba(0,0,0,.5);}
   .dial-status{
     text-align:center; margin-top:9px; min-height:20px;
     font-size:13px; font-style:italic; color:#ffe1a0; letter-spacing:.4px;
