@@ -10,28 +10,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cathedral">
-<script>
-  /* first launch only: hold the set in darkness before the first paint, so
-     the reveal never flashes the finished room first */
-  try { if (!localStorage.getItem("cathedral_seen_v1")) {
-    document.documentElement.className += " reveal";
-    /* if the set's works never load, don't leave the room dark */
-    setTimeout(function () { if (!document.querySelector(".reveal-veil")) document.documentElement.className = document.documentElement.className.replace(/\s*\breveal\b/g, ""); }, 4000);
-  } } catch (e) {}
-</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  /* shared surface textures, drawn once (all procedural):
-     --scratch  hairline wear on brass — most of it following the brushing, a few strays
-     --brush    the long brushed grain of a rolled brass sheet
-     --mottle   the wood-flour cloud deep inside dark Bakelite */
-  :root{
-    --scratch:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' fill='none' stroke-linecap='round'%3E%3Cpath d='M204.6 27.5L176.9 43.3' stroke='rgba(255,250,228,0.20)' stroke-width='0.45'/%3E%3Cpath d='M131.3 236.7L178.4 240.4' stroke='rgba(58,38,8,0.13)' stroke-width='0.35'/%3E%3Cpath d='M287.9 291.4L327.7 280.7' stroke='rgba(255,250,228,0.15)' stroke-width='0.45'/%3E%3Cpath d='M194.5 129.7L225.0 127.0' stroke='rgba(58,38,8,0.15)' stroke-width='0.6'/%3E%3Cpath d='M125.1 2.6L157.9 9.8' stroke='rgba(58,38,8,0.08)' stroke-width='0.45'/%3E%3Cpath d='M158.3 246.3L164.8 244.2' stroke='rgba(58,38,8,0.17)' stroke-width='0.45'/%3E%3Cpath d='M209.8 153.2L254.3 151.5' stroke='rgba(255,250,228,0.13)' stroke-width='0.6'/%3E%3Cpath d='M190.4 131.6L200.6 133.6' stroke='rgba(255,250,228,0.14)' stroke-width='0.45'/%3E%3Cpath d='M194.9 102.3L202.0 103.8' stroke='rgba(255,250,228,0.18)' stroke-width='0.35'/%3E%3Cpath d='M245.3 86.6L252.4 86.9' stroke='rgba(255,250,228,0.13)' stroke-width='0.6'/%3E%3Cpath d='M156.2 274.8L162.5 274.5' stroke='rgba(58,38,8,0.09)' stroke-width='0.35'/%3E%3Cpath d='M120.4 94.9L134.4 97.0' stroke='rgba(58,38,8,0.16)' stroke-width='0.6'/%3E%3Cpath d='M210.4 104.1L239.2 107.8' stroke='rgba(58,38,8,0.16)' stroke-width='0.35'/%3E%3Cpath d='M215.9 253.3L207.7 285.2' stroke='rgba(58,38,8,0.11)' stroke-width='0.45'/%3E%3Cpath d='M65.9 297.3L106.6 299.3' stroke='rgba(255,250,228,0.12)' stroke-width='0.45'/%3E%3Cpath d='M146.0 20.5L170.5 24.6' stroke='rgba(58,38,8,0.16)' stroke-width='0.6'/%3E%3Cpath d='M215.0 85.1L234.2 87.8' stroke='rgba(255,250,228,0.17)' stroke-width='0.6'/%3E%3Cpath d='M26.2 221.7L19.2 233.1' stroke='rgba(58,38,8,0.10)' stroke-width='0.35'/%3E%3Cpath d='M285.2 251.0L274.5 258.6' stroke='rgba(255,250,228,0.14)' stroke-width='0.35'/%3E%3Cpath d='M289.1 107.9L292.2 113.1' stroke='rgba(58,38,8,0.17)' stroke-width='0.35'/%3E%3Cpath d='M199.9 21.1L218.2 18.6' stroke='rgba(58,38,8,0.15)' stroke-width='0.45'/%3E%3Cpath d='M246.0 240.6L234.5 284.9' stroke='rgba(255,250,228,0.19)' stroke-width='0.6'/%3E%3Cpath d='M61.1 19.2L77.3 16.8' stroke='rgba(255,250,228,0.12)' stroke-width='0.6'/%3E%3Cpath d='M2.4 209.0L-17.3 212.6' stroke='rgba(58,38,8,0.19)' stroke-width='0.6'/%3E%3Cpath d='M141.5 11.4L148.6 12.4' stroke='rgba(58,38,8,0.15)' stroke-width='0.6'/%3E%3Cpath d='M275.6 164.5L291.6 167.0' stroke='rgba(255,250,228,0.23)' stroke-width='0.45'/%3E%3Cpath d='M146.8 269.8L173.1 266.0' stroke='rgba(58,38,8,0.17)' stroke-width='0.6'/%3E%3Cpath d='M67.2 149.1L113.1 148.7' stroke='rgba(58,38,8,0.14)' stroke-width='0.35'/%3E%3Cpath d='M50.5 285.9L92.8 284.5' stroke='rgba(58,38,8,0.16)' stroke-width='0.45'/%3E%3Cpath d='M196.7 133.4L233.8 138.2' stroke='rgba(255,250,228,0.22)' stroke-width='0.35'/%3E%3Cpath d='M255.8 26.8L239.6 36.5' stroke='rgba(255,250,228,0.19)' stroke-width='0.35'/%3E%3Cpath d='M248.4 12.2L267.1 31.7' stroke='rgba(255,250,228,0.20)' stroke-width='0.6'/%3E%3Cpath d='M228.8 216.6L261.5 218.1' stroke='rgba(255,250,228,0.25)' stroke-width='0.6'/%3E%3Cpath d='M217.8 245.0L244.8 272.3' stroke='rgba(58,38,8,0.17)' stroke-width='0.45'/%3E%3Cpath d='M126.3 268.8L115.5 287.0' stroke='rgba(255,250,228,0.25)' stroke-width='0.45'/%3E%3Cpath d='M163.6 287.3L131.8 316.5' stroke='rgba(58,38,8,0.09)' stroke-width='0.6'/%3E%3Cpath d='M192.4 53.7L228.8 55.2' stroke='rgba(255,250,228,0.18)' stroke-width='0.35'/%3E%3Cpath d='M85.9 292.9L112.5 289.6' stroke='rgba(58,38,8,0.14)' stroke-width='0.6'/%3E%3Cpath d='M97.5 90.2L94.4 132.3' stroke='rgba(58,38,8,0.14)' stroke-width='0.6'/%3E%3Cpath d='M237.0 46.9L258.9 47.4' stroke='rgba(58,38,8,0.09)' stroke-width='0.6'/%3E%3Cpath d='M100.8 170.9L138.0 183.0' stroke='rgba(255,250,228,0.15)' stroke-width='0.6'/%3E%3Cpath d='M148.0 94.6L172.0 108.4' stroke='rgba(255,250,228,0.14)' stroke-width='0.35'/%3E%3Cpath d='M23.2 253.0L10.8 265.2' stroke='rgba(255,250,228,0.15)' stroke-width='0.6'/%3E%3Cpath d='M199.1 77.8L197.3 105.9' stroke='rgba(58,38,8,0.20)' stroke-width='0.45'/%3E%3Cpath d='M77.5 125.6L88.3 126.2' stroke='rgba(255,250,228,0.17)' stroke-width='0.35'/%3E%3Cpath d='M142.5 251.9L189.8 246.0' stroke='rgba(58,38,8,0.08)' stroke-width='0.45'/%3E%3Cpath d='M234.0 278.7L255.6 280.4' stroke='rgba(255,250,228,0.17)' stroke-width='0.6'/%3E%3Cpath d='M261.3 124.8L295.4 129.6' stroke='rgba(255,250,228,0.11)' stroke-width='0.35'/%3E%3Cpath d='M20.7 289.9L46.2 321.7' stroke='rgba(58,38,8,0.15)' stroke-width='0.45'/%3E%3Cpath d='M241.5 238.4L271.1 241.3' stroke='rgba(255,250,228,0.14)' stroke-width='0.45'/%3E%3Cpath d='M172.4 283.9L184.3 289.1' stroke='rgba(255,250,228,0.22)' stroke-width='0.6'/%3E%3Cpath d='M232.1 101.9L255.4 97.5' stroke='rgba(255,250,228,0.15)' stroke-width='0.35'/%3E%3Cpath d='M50.7 186.8L35.4 216.1' stroke='rgba(255,250,228,0.16)' stroke-width='0.45'/%3E%3Cpath d='M209.8 109.8L232.1 108.0' stroke='rgba(255,250,228,0.13)' stroke-width='0.45'/%3E%3Cpath d='M185.8 261.3L231.8 256.6' stroke='rgba(58,38,8,0.15)' stroke-width='0.6'/%3E%3Cpath d='M84.7 215.0L122.8 211.9' stroke='rgba(255,250,228,0.16)' stroke-width='0.35'/%3E%3Cpath d='M246.2 261.5L285.2 261.6' stroke='rgba(255,250,228,0.18)' stroke-width='0.6'/%3E%3Cpath d='M1.4 225.7L7.4 227.5' stroke='rgba(58,38,8,0.17)' stroke-width='0.6'/%3E%3Cpath d='M116.5 201.1L134.8 202.9' stroke='rgba(255,250,228,0.18)' stroke-width='0.45'/%3E%3Cpath d='M150.3 11.8L161.1 38.3' stroke='rgba(58,38,8,0.10)' stroke-width='0.6'/%3E%3Cpath d='M142.8 121.2L186.8 123.8' stroke='rgba(255,250,228,0.17)' stroke-width='0.45'/%3E%3Cpath d='M236.5 151.6L266.9 162.2' stroke='rgba(255,250,228,0.24)' stroke-width='0.6'/%3E%3Cpath d='M105.1 281.0L150.8 285.9' stroke='rgba(255,250,228,0.20)' stroke-width='0.45'/%3E%3Cpath d='M93.1 135.3L123.8 165.0' stroke='rgba(58,38,8,0.20)' stroke-width='0.45'/%3E%3Cpath d='M123.3 34.4L147.3 30.7' stroke='rgba(255,250,228,0.21)' stroke-width='0.6'/%3E%3Cpath d='M28.3 203.6L75.0 214.0' stroke='rgba(255,250,228,0.17)' stroke-width='0.35'/%3E%3Cpath d='M240.8 29.1L272.8 30.4' stroke='rgba(255,250,228,0.24)' stroke-width='0.35'/%3E%3Cpath d='M125.3 176.3L149.3 182.0' stroke='rgba(58,38,8,0.18)' stroke-width='0.6'/%3E%3Cpath d='M9.2 61.7L-2.0 79.3' stroke='rgba(255,250,228,0.20)' stroke-width='0.6'/%3E%3Cpath d='M272.6 75.2L283.3 74.9' stroke='rgba(255,250,228,0.19)' stroke-width='0.45'/%3E%3C/svg%3E");
-    --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200'%3E%3Cfilter id='b' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004 0.85' numOctaves='2' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.95 0 0 0 0 0.82 0.9 0 0 0 -0.42'/%3E%3C/filter%3E%3Crect width='400' height='200' filter='url(%23b)'/%3E%3C/svg%3E");
-    --mottle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='m' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.06' numOctaves='3' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.40 0 0 0 0 0.20 0 0 0 0 0.07 0.85 0 0 0 -0.40'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23m)'/%3E%3C/svg%3E");
-  }
   html,body{margin:0; padding:0;}
   body{
     min-height:100dvh; color:#efe3c8;
@@ -54,35 +36,6 @@
   body.listening::after{opacity:1;}
 
   .stage{max-width:560px; margin:0 auto; position:relative; z-index:2;}
-  body{overflow-x:hidden; overflow-x:clip;}   /* the sideboard runs off both edges of the picture */
-
-  /* ---- the sideboard: the set stands on a dark polished top, shot like a
-     catalogue photograph — the far edge falls into shadow, the near edge
-     catches the key light along its rounded lip, and the set's lamp warms
-     the finish in front of it ---- */
-  .seat{position:relative; isolation:isolate; max-width:480px; margin:0 auto;}
-  .seat::before{content:""; position:absolute; z-index:-2; left:50%; width:100vw; transform:translateX(-50%);
-    bottom:-40px; height:110px; pointer-events:none;
-    background:
-      linear-gradient(180deg, rgba(0,0,0,0) calc(100% - 11px), rgba(255,214,160,.30) calc(100% - 10px), rgba(255,214,160,.08) calc(100% - 7px), rgba(0,0,0,.55) calc(100% - 3px), rgba(0,0,0,.85) 100%),
-      /* the set's reflection, blurred in the polish just in front of the plinth */
-      radial-gradient(40% 26% at 50% calc(100% - 30px), rgba(120,72,34,.30), rgba(120,72,34,0) 100%),
-      radial-gradient(34% 60% at 50% 46%, rgba(255,190,110,.12), rgba(255,190,110,0) 75%),
-      radial-gradient(60% 90% at 50% 100%, rgba(255,220,170,.07), rgba(255,220,170,0) 70%),
-      repeating-linear-gradient(178.6deg, rgba(0,0,0,.16) 0 1px, rgba(0,0,0,0) 1px 4px, rgba(255,210,160,.025) 4px 5px, rgba(0,0,0,0) 5px 9px),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='120'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0025 0.11' numOctaves='3' seed='41' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.02 0 0 0 0 0.01 0 0 0 0 0 1.5 0 0 0 -0.55'/%3E%3C/filter%3E%3Crect width='600' height='120' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 600px 100%,
-      linear-gradient(180deg, #0c0603 0%, #1b0f07 38%, #2d1a0c 76%, #3b2413 calc(100% - 11px), #160b04 100%);
-    -webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
-            mask-image:linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
-    transition:filter 1.6s ease;}
-  body.listening .seat::before{filter:brightness(.82);}
-  /* contact shadow: soft and wide where the case leans its weight, tight and
-     near-black right under the plinth */
-  .seat::after{content:""; position:absolute; z-index:-1; pointer-events:none;
-    left:1%; right:1%; bottom:-22px; height:40px;
-    background:
-      radial-gradient(46% 22% at 50% 38%, rgba(0,0,0,.82), rgba(0,0,0,0) 100%),
-      radial-gradient(54% 50% at 50% 40%, rgba(0,0,0,.55), rgba(0,0,0,0) 100%);}
 
   .site-sub{text-align:center; margin:0 auto 10px; font-size:13.5px; color:#8a755a; font-style:italic;}
 
@@ -95,21 +48,17 @@
     /* real veneer: generated-SVG grain figure under a lacquer finish */
     background:
       linear-gradient(115deg, rgba(255,255,255,.13) 0%, rgba(255,255,255,.02) 34%, rgba(255,255,255,0) 55%), /* lacquer sheen */
-      /* open walnut pores: fine dark flecks drawn out along the grain, filled under the lacquer */
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.8' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.025 0 0 0 0 0.01 -7 0 0 0 2.55'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.7'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23p)'/%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011 0.13' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.13 0 0 0 0 0.07 0 0 0 0 0.02 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='360' height='360' filter='url(%23w)'/%3E%3C/svg%3E"),
-      /* heartwood figure: slow red-brown streaks, so no two boards of the case read alike */
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.028' numOctaves='3' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.15 0 0 0 0 0.05 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='520' height='520' filter='url(%23f)'/%3E%3C/svg%3E"),
       radial-gradient(ellipse 34px 48px at 20% 38%, rgba(18,9,4,.28), transparent 70%),
       repeating-linear-gradient(91deg, rgba(14,7,3,.09) 0 2px, rgba(255,205,145,.03) 2px 4px, transparent 4px 17px),
       repeating-linear-gradient(0deg, rgba(20,10,4,.05) 0 2px, transparent 2px 13px),
       repeating-linear-gradient(89deg, transparent 0 78px, rgba(0,0,0,.12) 78px 81px, transparent 81px 160px),
       linear-gradient(180deg,#5d3a1d 0%,#402512 50%,#281605 100%);
-    background-size:auto, 240px 240px, 360px 360px, 520px 520px, auto, auto, auto, auto, auto;
+    background-size:auto, 360px 360px, auto, auto, auto, auto, auto;
     border:2px solid #1d0f05;
     box-shadow:
-      0 -6px 60px rgba(0,0,0,.55),   /* standing on the sideboard: the case shades the wall, not the floor */
-      0 6px 14px rgba(0,0,0,.45),
+      0 30px 70px rgba(0,0,0,.7),
+      0 8px 22px rgba(0,0,0,.5),
       0 0 80px 8px rgba(255,190,110,0),
       inset 0 2px 0 rgba(255,235,185,.38),       /* bevelled top edge catching light */
       inset 0 -6px 16px rgba(0,0,0,.55),
@@ -120,8 +69,8 @@
   }
   body.listening .radio{
     box-shadow:
-      0 -6px 60px rgba(0,0,0,.55),   /* standing on the sideboard: the case shades the wall, not the floor */
-      0 6px 14px rgba(0,0,0,.45),
+      0 30px 70px rgba(0,0,0,.7),
+      0 8px 22px rgba(0,0,0,.5),
       0 0 80px 8px rgba(255,190,110,.14),
       inset 0 2px 0 rgba(255,235,185,.38),
       inset 0 -6px 16px rgba(0,0,0,.55),
@@ -137,32 +86,13 @@
     pointer-events:none;}
   /* the cathedral figure: arched grain flowing over the top of the veneer,
      fading as it runs down the case (behind the fittings, above the finish) */
-  .radio::after{content:""; position:absolute; inset:0; z-index:-2;
+  .radio::after{content:""; position:absolute; inset:0; z-index:-1;
     border-radius:inherit; pointer-events:none;
     background:repeating-radial-gradient(ellipse 108% 64% at 50% -8%,
       transparent 0 40px, rgba(16,8,3,.14) 40px 42px,
       rgba(255,206,150,.05) 42px 44px, transparent 44px 84px);
     -webkit-mask-image:linear-gradient(180deg,#000 26%, transparent 76%);
             mask-image:linear-gradient(180deg,#000 26%, transparent 76%);}
-
-  /* the clearcoat: a deep, rubbed-out lacquer lying over the veneer — one broad
-     soft reflection of the room's lamp across the crown, a glancing streak down
-     the left shoulder, and the faint wet depth a hand-rubbed finish has */
-  .lacquer{position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none;
-    background:
-      radial-gradient(38% 15% at calc(36% + var(--lx,0) * 9%) calc(9% + var(--ly,0) * 4%), rgba(255,240,210,.24), rgba(255,240,210,0) 70%),
-      radial-gradient(9% 34% at calc(9% + var(--lx,0) * 3%) calc(44% + var(--ly,0) * 10%), rgba(255,232,195,.10), rgba(255,232,195,0) 72%),
-      linear-gradient(102deg, rgba(255,236,200,0) calc(18% + var(--lx,0) * 6%), rgba(255,236,200,.07) calc(24% + var(--lx,0) * 6%), rgba(255,236,200,0) calc(31% + var(--lx,0) * 6%)),
-      radial-gradient(120% 70% at 50% 110%, rgba(0,0,0,.18), rgba(0,0,0,0) 60%);
-    box-shadow:inset 0 0 0 1px rgba(255,230,190,.05);}
-  /* holly stringing: a hairline of pale boxwood between two ebony lines, let
-     into the case just outside the brass trim — the cabinetmaker's signature */
-  .inlay{position:absolute; inset:5.5px; z-index:-1; pointer-events:none;
-    border-radius:235px 235px 15px 15px / 195px 195px 15px 15px;
-    border:1.6px solid rgba(226,204,156,.62);
-    box-shadow:0 0 0 1px rgba(14,7,2,.72), inset 0 0 0 1px rgba(14,7,2,.66), inset 0 1px 0 1px rgba(255,240,205,.08);
-    -webkit-mask-image:linear-gradient(180deg,#000 0%, #000 62%, rgba(0,0,0,.55) 100%);
-            mask-image:linear-gradient(180deg,#000 0%, #000 62%, rgba(0,0,0,.55) 100%);}
 
   /* ---- the dial: a curved glass arc with a printed frequency scale ---- */
   .dial{
@@ -190,13 +120,8 @@
       inset 0 -10px 20px rgba(100,48,0,.38),
       inset 10px 0 18px rgba(110,54,0,.22),
       inset -10px 0 18px rgba(110,54,0,.22);
-    opacity:.42; transition:opacity 2.4s ease, box-shadow 2.4s ease, filter 1.7s ease;
+    opacity:.42; transition:opacity 2.4s ease, box-shadow 2.4s ease;
   }
-  /* the dial lamp's first moment: a cold filament barely red, before it
-     heats through to amber (app.js swaps .filament for .on) */
-  .dial.filament .dial-glass{opacity:.6;
-    filter:sepia(.5) hue-rotate(-34deg) saturate(2.4) brightness(.46);
-    transition:opacity .7s ease, box-shadow .7s ease, filter .7s ease;}
   .dial.on .dial-glass{opacity:1;
     box-shadow:
       inset 0 0 24px rgba(110,54,0,.5),
@@ -211,20 +136,6 @@
   .dial-glass::before{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
     background:radial-gradient(58% 44% at 50% 16%, rgba(255,242,205,.55), transparent 70%);
     opacity:calc(.18 + var(--glow, .5) * .55);}
-  /* the glass itself, in front of the scale: a thin bright edge where the
-     curved pane turns away, the soft window of the room light lying across it
-     (it drifts with --lx), a sprinkle of dust that settled on the inside, and
-     an uneven falloff — the lamp sits a touch left of centre, so the amber
-     dies faster into the right shoulder and the lower corners */
-  .dial-glass::after{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3;
-    background:
-      radial-gradient(52% 30% at 50% 2%, rgba(255,252,240,0) 82%, rgba(255,252,240,.30) 92%, rgba(255,252,240,0) 100%),
-      linear-gradient(112deg, rgba(255,255,255,0) calc(30% + var(--lx,0) * 8%), rgba(255,255,255,.10) calc(36% + var(--lx,0) * 8%), rgba(255,255,255,.03) calc(44% + var(--lx,0) * 8%), rgba(255,255,255,0) calc(47% + var(--lx,0) * 8%)),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='d' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' seed='31' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.97 0 0 0 0 0.9 9 0 0 0 -6.5'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.24'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23d)'/%3E%3Cpath d='M41 62q5 -3 9 1M128 131q3 4 8 2M150 40q-2 5 2 8' fill='none' stroke='rgba(255,248,230,.16)' stroke-width='.45'/%3E%3C/svg%3E") 0 0 / 180px 180px,
-      radial-gradient(70% 120% at 100% 100%, rgba(80,36,0,.26), rgba(80,36,0,0) 60%),
-      radial-gradient(50% 90% at 0% 100%, rgba(80,36,0,.20), rgba(80,36,0,0) 62%),
-      radial-gradient(120% 140% at 44% 40%, rgba(90,40,0,0) 55%, rgba(90,40,0,.16) 100%);
-    box-shadow:inset 0 0 0 1px rgba(255,248,225,.10), inset 0 1.5px 0 rgba(255,252,240,.22);}
   .dial-arc{position:absolute; left:6px; right:6px; top:10px; height:40px; width:calc(100% - 12px); z-index:0; pointer-events:none;}
   .dial-band{position:relative; height:44px; z-index:1;}
   /* the station readout: a backlit slot under the glass — the tuned
@@ -261,8 +172,7 @@
     background:#a01818; border-radius:2px; z-index:1;
     /* a painted sliver of metal: on a dark set it casts no light of its own */
     box-shadow:0 0 2px rgba(0,0,0,.45);
-    /* a stepped tune carries the needle with weight: slow to start, a hair past, home */
-    transition:left .95s cubic-bezier(.55,0,.22,1.12), box-shadow 1.6s ease;
+    transition:left .8s cubic-bezier(.6,0,.3,1), box-shadow 1.6s ease;
   }
   /* the red halo belongs to the dial lamp — it exists only while the set is on,
      blooming in and fading out with the warm-up rather than snapping */
@@ -286,7 +196,7 @@
     box-shadow:inset 0 0 10px rgba(0,0,0,.9);
     transition:background 1.5s ease;
   }
-  .eye-glass.lit{
+  .dial.on ~ * .eye-glass, .eye-glass.lit{
     background:
       radial-gradient(circle at 50% 45%, #3cab5c 0%, #22753f 52%, #103a1d 88%, #0a2c14 100%);
     box-shadow:inset 0 0 12px rgba(120,255,150,.45), inset 0 0 4px rgba(200,255,210,.6),
@@ -318,16 +228,6 @@
     box-shadow:inset 0 3px 14px rgba(0,0,0,.75), inset 0 0 34px rgba(0,0,0,.5);
     overflow:hidden;
   }
-  /* the tubes' glow, seen through the cloth from behind: an orange warmth low
-     in the middle that comes up slowly once the set is on and the
-     filaments are hot — never bright enough to show the chassis */
-  .grille::before{content:""; position:absolute; inset:0; pointer-events:none;
-    background:
-      radial-gradient(34% 46% at 50% 66%, rgba(255,150,60,.30), rgba(255,130,40,.10) 55%, rgba(255,120,30,0) 100%),
-      radial-gradient(16% 26% at 30% 70%, rgba(255,170,80,.12), rgba(255,170,80,0) 100%),
-      radial-gradient(16% 26% at 70% 70%, rgba(255,170,80,.10), rgba(255,170,80,0) 100%);
-    mix-blend-mode:screen; opacity:0; transition:opacity 3.2s ease .6s;}
-  .dial.on ~ .grille::before{opacity:1;}
   .grille .fret{position:absolute; inset:0; width:100%; height:100%; display:block; transform-origin:50% 55%;}
   .grille::after{content:""; position:absolute; inset:0; pointer-events:none;
     background:radial-gradient(60% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
@@ -343,31 +243,18 @@
   .knob-ticks i.major{height:10px; width:2.5px; background:#d8b25e;}
   .knob-esc{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:78px; height:78px; border-radius:50%;
-    background:
-      var(--scratch) center / 120px 120px,
-      conic-gradient(from calc(-28deg + var(--lx,0) * 24deg) at 50% 50%,
-        rgba(255,246,214,0) 0deg, rgba(255,246,214,.26) 32deg, rgba(255,246,214,0) 78deg,
-        rgba(60,40,10,.10) 130deg, rgba(255,246,214,0) 180deg, rgba(255,246,214,.18) 212deg,
-        rgba(255,246,214,0) 258deg, rgba(60,40,10,.10) 310deg, rgba(255,246,214,0) 360deg),
-      repeating-radial-gradient(circle at 50% 50%, rgba(255,250,225,.07) 0 .6px, rgba(60,40,10,.08) .6px 1.3px),
-      radial-gradient(circle at calc(36% + var(--lx,0) * 8%) calc(30% + var(--ly,0) * 8%), #e6c877 0%, #a37c34 52%, #5f431a 100%);
+    background:radial-gradient(circle at 36% 30%, #e6c877 0%, #a37c34 52%, #5f431a 100%);
     box-shadow:0 3px 8px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,245,210,.7), inset 0 -2px 4px rgba(0,0,0,.45);
     display:flex; align-items:center; justify-content:center;}
   .knob-skirt{width:66px; height:66px; border-radius:50%;
-    background:
-      radial-gradient(46% 22% at 42% 14%, rgba(255,238,205,.16), rgba(255,238,205,0) 70%),
-      var(--mottle) center / 70px 70px,
-      radial-gradient(circle at 40% 32%, #43301b, #1d1107 78%);
+    background:radial-gradient(circle at 40% 32%, #43301b, #1d1107 78%);
     box-shadow:inset 0 2px 4px rgba(0,0,0,.8), 0 1px 0 rgba(255,240,200,.25);
     display:flex; align-items:center; justify-content:center;}
   .knob{
     width:56px; height:56px; border-radius:50%; border:none; cursor:pointer; position:relative;
     /* knurled edge: fine radial teeth around a bakelite body */
     background:
-      radial-gradient(30% 20% at calc(36% + var(--lx,0) * 8%) calc(24% + var(--ly,0) * 6%), rgba(255,244,222,.34), rgba(255,244,222,0) 72%),
-      radial-gradient(70% 70% at 50% 50%, rgba(0,0,0,0) 58%, rgba(255,230,190,.10) 66%, rgba(0,0,0,0) 74%),
       repeating-conic-gradient(from 0deg, rgba(0,0,0,.38) 0deg 5deg, rgba(255,235,200,.13) 5deg 10deg),
-      var(--mottle) center / 60px 60px,
       radial-gradient(circle at 34% 30%, #6a4a28 0%, #41301a 55%, #241708 100%);
     box-shadow:
       0 5px 12px rgba(0,0,0,.65),
@@ -376,7 +263,7 @@
     touch-action:none;
   }
   .knob:focus-visible{outline:2px solid #ffd98a; outline-offset:3px;}
-  .knob .ptr{position:absolute; inset:0;}   /* turned by a spring in app.js */
+  .knob .ptr{position:absolute; inset:0; transition:transform .18s ease;}
   .knob .ptr::before{content:""; position:absolute; left:50%; top:5px; width:5px; height:14px;
     margin-left:-2.5px; border-radius:3px; background:#f2d492;
     box-shadow:0 0 5px rgba(0,0,0,.6);}
@@ -385,11 +272,7 @@
   .power{
     width:44px; height:44px; border-radius:50%; cursor:pointer; position:relative;
     border:2px solid #120c07;
-    background:
-      radial-gradient(34% 22% at calc(36% + var(--lx,0) * 8%) calc(22% + var(--ly,0) * 6%), rgba(255,244,222,.38), rgba(255,244,222,0) 72%),
-      radial-gradient(80% 80% at 50% 120%, rgba(255,220,170,.10), rgba(255,220,170,0) 50%),
-      var(--mottle) center / 50px 50px,
-      radial-gradient(circle at 35% 27%, #77593a 0%, #3a2a1a 52%, #1a1109 100%);
+    background:radial-gradient(circle at 35% 27%, #77593a 0%, #3a2a1a 52%, #1a1109 100%);
     box-shadow:
       0 0 0 3px #96762f,
       0 0 0 5px rgba(20,12,5,.9),
@@ -397,13 +280,13 @@
       inset 0 2px 3px rgba(255,240,210,.35),
       inset 0 -4px 7px rgba(0,0,0,.55);
     display:flex; align-items:center; justify-content:center;
-    transition:transform .13s cubic-bezier(.3,0,.2,1);
+    transition:transform .08s ease;
   }
   .power:focus-visible{outline:2px solid #ffd98a; outline-offset:3px;}
   .power:active{transform:translateY(1px);}
   .power .jewel{width:11px; height:11px; border-radius:50%;
     background:radial-gradient(circle at 40% 35%, #6b4a22, #38260a);
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.85); transition:all .5s ease;}
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.85); transition:all .35s ease;}
   .power.on .jewel{
     background:radial-gradient(circle at 40% 35%, #ffdda6, #ff9d2e 60%, #c56f10);
     box-shadow:0 0 11px rgba(255,170,60,.95), inset 0 0 2px rgba(255,255,255,.7);}
@@ -411,31 +294,17 @@
   /* nameplate */
   .nameplate{text-align:center; margin-top:16px;}
   .nameplate span{display:inline-block; padding:5px 18px 4px; border-radius:3px;
-    background:radial-gradient(60% 140% at calc(35% + var(--lx,0) * 30%) 0%, rgba(255,246,214,.30), rgba(255,246,214,0) 70%),
-      var(--scratch) 0 0 / 150px 150px,
-      var(--brush) 0 0 / 200px 100px,
-      linear-gradient(180deg,#c8a04a,#8a6a2f); color:#2a1c08;
-    font-size:12px; letter-spacing:5.5px; font-weight:700; position:relative;
-    /* letters cut into the brass: a dark floor, light on the lower lip, shade under the upper */
-    color:#24170a; text-shadow:0 1px 0 rgba(255,242,205,.6), 0 -1px 0 rgba(48,30,6,.42);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(70,45,10,.45),
-      inset 0 0 0 3px rgba(0,0,0,0), inset 0 0 0 3.5px rgba(70,45,10,.30),
-      0 1px 0 rgba(20,10,4,.9), 0 2px 6px rgba(0,0,0,.5);}
-  /* two brass escutcheon pins hold the nameplate */
-  .nameplate span::before, .nameplate span::after{content:""; position:absolute; top:50%; width:4px; height:4px; margin-top:-2px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #f6e4a6, #9c7a32 70%, #5f471a);
-    box-shadow:0 .5px 0 rgba(255,244,205,.4), inset 0 -.5px 1px rgba(43,28,4,.6);}
-  .nameplate span::before{left:6px;} .nameplate span::after{right:6px;}
+    background:linear-gradient(180deg,#c8a04a,#8a6a2f); color:#2a1c08;
+    font-size:12px; letter-spacing:5px; font-weight:700;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(0,0,0,.5);}
 
   /* ---- now on the air: a brass maker's plate, screwed down under the set ---- */
   .now-card{
-    position:relative; max-width:480px; margin:52px auto 0; padding:16px 20px 14px;
+    position:relative; max-width:480px; margin:18px auto 0; padding:16px 20px 14px;
     border-radius:8px; text-align:center; color:#2e1c08;
     background:
-      var(--scratch) 0 0 / 300px 300px,
-      var(--brush) 0 0 / 400px 200px,
       repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 2px, rgba(59,38,8,.028) 2px 4px),
-      radial-gradient(120% 90% at calc(50% + var(--lx,0) * 16%) calc(0% + var(--ly,0) * 12%), rgba(255,244,205,.26), rgba(255,244,205,0) 55%),
+      radial-gradient(120% 90% at 50% 0%, rgba(255,244,205,.26), rgba(255,244,205,0) 55%),
       radial-gradient(60% 50% at 12% 88%, rgba(70,45,10,.15), rgba(70,45,10,0) 60%),
       radial-gradient(50% 42% at 88% 76%, rgba(70,45,10,.13), rgba(70,45,10,0) 60%),
       linear-gradient(172deg,#c9a856 0%,#ac8438 48%,#8f6a2a 82%,#7d5c22 100%);
@@ -454,7 +323,7 @@
   .now-card[hidden]{display:none;}
   /* the screws holding the plate down — each one turned to its own angle */
   .screw{position:absolute; width:13px; height:13px; border-radius:50%; pointer-events:none; z-index:2;
-    background:radial-gradient(circle at calc(35% + var(--lx,0) * 10%) calc(30% + var(--ly,0) * 10%), #f0da94, #bd9843 42%, #86652a 78%, #5f471a);
+    background:radial-gradient(circle at 35% 30%, #f0da94, #bd9843 42%, #86652a 78%, #5f471a);
     box-shadow:inset 0 -1px 2px rgba(43,28,4,.65), inset 0 1px 1px rgba(255,252,230,.7), 0 1px 2px rgba(43,28,4,.55);}
   .screw::after{content:""; position:absolute; left:1.5px; right:1.5px; top:50%; height:2px; margin-top:-1px; border-radius:1px;
     background:linear-gradient(180deg,#33250b,#5d431a); box-shadow:0 1px 0 rgba(255,244,205,.45);
@@ -465,30 +334,23 @@
     text-shadow:0 1px 0 rgba(255,244,205,.45);}
   .now-lamp::before{content:"● "; color:#ff9d2e; text-shadow:0 0 8px rgba(255,157,46,.9), 0 0 2px rgba(120,50,0,.6);}
   /* lettering engraved into the brass: dark cut, light catching the lower edge */
-  .now-show{font-size:20px; font-weight:700; color:#2a1906; margin-top:5px; line-height:1.25; letter-spacing:.2px;
-    text-shadow:0 1px 0 rgba(255,244,205,.58), 0 -1px 0 rgba(46,28,6,.28);}
-  .now-tag{font-size:13px; font-style:italic; color:#563a18; margin-top:2px; text-shadow:0 1px 0 rgba(255,244,205,.42), 0 -1px 0 rgba(46,28,6,.16);}
-  .now-ep{font-size:14.5px; color:#2a1906; margin-top:9px; line-height:1.45; text-shadow:0 1px 0 rgba(255,244,205,.42), 0 -1px 0 rgba(46,28,6,.18);}
-  .now-date{font-size:12px; color:#5e4419; margin-top:2px; letter-spacing:.4px; text-shadow:0 1px 0 rgba(255,244,205,.35);}
-  /* the set's own number, stamped small at the foot of the plate */
-  .now-serial{margin-top:11px; font-size:8.5px; letter-spacing:3.2px; font-weight:700; text-transform:uppercase;
-    color:#4d3612; text-shadow:0 1px 0 rgba(255,244,205,.5), 0 -1px 0 rgba(46,28,6,.3); font-variant-numeric:oldstyle-nums;}
+  .now-show{font-size:20px; font-weight:700; color:#2e1c08; margin-top:5px; line-height:1.25;
+    text-shadow:0 1px 0 rgba(255,244,205,.5);}
+  .now-tag{font-size:13px; font-style:italic; color:#5d3f1c; margin-top:2px; text-shadow:0 1px 0 rgba(255,244,205,.35);}
+  .now-ep{font-size:14.5px; color:#2e1c08; margin-top:9px; line-height:1.45; text-shadow:0 1px 0 rgba(255,244,205,.35);}
+  .now-date{font-size:12px; color:#654a1e; margin-top:2px; letter-spacing:.4px;}
   .now-controls{display:flex; justify-content:center; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;}
   /* transport keys seated on the plate: dark bakelite, one brass play key */
   .now-btn{min-height:42px; padding:8px 13px; border-radius:24px; cursor:pointer;
     font-family:Georgia,'Times New Roman',serif; font-size:13px; font-weight:700; letter-spacing:.4px;
-    color:#f0d79a; background:
-      linear-gradient(180deg, rgba(255,240,210,.16) 0%, rgba(255,240,210,.04) 42%, rgba(255,240,210,0) 52%),
-      var(--mottle) center / 60px 60px,
-      radial-gradient(130% 150% at 50% 0%, #4b3520, #221304 72%);
+    color:#f0d79a; background:radial-gradient(130% 150% at 50% 0%, #4b3520, #221304 72%);
     border:1px solid #140b02;
     box-shadow:inset 0 1px 0 rgba(255,232,180,.3), inset 0 -2px 4px rgba(0,0,0,.6), 0 3px 7px rgba(59,38,8,.5);}
-  .now-btn{transition:transform .12s cubic-bezier(.3,0,.2,1), box-shadow .12s ease;}
-  .now-btn:active{transform:translateY(1.5px); box-shadow:inset 0 1px 0 rgba(255,232,180,.2), inset 0 -1px 3px rgba(0,0,0,.6), 0 1px 3px rgba(59,38,8,.5);}
+  .now-btn:active{transform:translateY(1px);}
   .now-btn:focus-visible{outline:2px solid #3a2410; outline-offset:2px;}
   .now-btn:disabled{opacity:.38; cursor:default; transform:none;}
   .now-btn.now-play{min-width:58px; font-size:15px; color:#2a1a05;
-    background:var(--scratch) 0 0 / 120px 120px, var(--brush) 0 0 / 200px 100px, linear-gradient(180deg,#b8933e,#7d5c22); border-color:#4e3712;
+    background:linear-gradient(180deg,#b8933e,#7d5c22); border-color:#4e3712;
     box-shadow:inset 0 1px 0 rgba(255,248,220,.75), inset 0 -2px 4px rgba(70,45,10,.55), 0 3px 8px rgba(59,38,8,.55);}
   .now-times{display:flex; justify-content:space-between; margin-top:8px;
     font-size:11.5px; color:#654a1e; letter-spacing:.6px; min-height:14px;}
@@ -501,13 +363,10 @@
     box-shadow:inset 0 1px 0 rgba(255,232,180,.25), 0 2px 5px rgba(59,38,8,.45);}
   .tone-btn{min-height:38px; padding:7px 13px; cursor:pointer; border:none;
     font-family:Georgia,'Times New Roman',serif; font-size:12.5px; font-weight:700; letter-spacing:.4px;
-    color:#e8cd8d; background:
-      linear-gradient(180deg, rgba(255,240,210,.13) 0%, rgba(255,240,210,.03) 42%, rgba(255,240,210,0) 52%),
-      var(--mottle) center / 60px 60px,
-      radial-gradient(130% 150% at 50% 0%, #43301b, #1d0f03 75%);}
+    color:#e8cd8d; background:radial-gradient(130% 150% at 50% 0%, #43301b, #1d0f03 75%);}
   .tone-btn + .tone-btn{border-left:1px solid rgba(240,215,154,.22);}
   .tone-btn:focus-visible{outline:2px solid #3a2410; outline-offset:2px;}
-  .tone-btn.active{color:#2a1a05; background:var(--brush) 0 0 / 200px 100px, linear-gradient(180deg,#b8933e,#7d5c22);}
+  .tone-btn.active{color:#2a1a05; background:linear-gradient(180deg,#b8933e,#7d5c22);}
   .tone-night{border:1px solid #140b02; border-radius:22px;}
   .tone-night.active{color:#ffe9bb; background:linear-gradient(180deg,#4a5a8a,#2c3a5e);
     border-color:rgba(24,34,72,.85); box-shadow:0 0 10px rgba(70,90,180,.45);}
@@ -556,9 +415,7 @@
     .power{width:34px; height:34px;}
     .nameplate{margin-top:8px;}
     .nameplate span{font-size:10px; padding:4px 14px 3px;}
-    .now-card{margin-top:30px; padding:9px 12px 8px;}
-    .seat::before{height:64px; bottom:-20px;}
-    .now-serial{margin-top:6px;}
+    .now-card{margin-top:10px; padding:9px 12px 8px;}
     .now-show{font-size:16px;}
     .now-controls{margin-top:8px;}
     .now-btn{min-height:36px; padding:6px 10px; font-size:12px;}
@@ -566,48 +423,11 @@
     .tone-btn{min-height:34px; padding:5px 10px; font-size:11.5px;}
     footer{margin-top:12px; font-size:11px; line-height:1.6;}
   }
-  @media (prefers-reduced-motion:reduce){
-    .needle{transition:none !important;}
-    .dial-glass{transition:none !important;}
-    .radio{transition:none !important;}
-    body{transition:none !important;}
-    body::after{transition:none !important;}
-    .knob .ptr{transition:none !important;}
-    .grille::before{transition:none !important;}
-    .power .jewel{transition:none !important;}
-    .power, .now-btn{transition:none !important;}
-  }
-  /* ---------- first-launch reveal: the set fades up out of a dark room ---------- */
-  html.reveal .stage{opacity:0; filter:brightness(.15) saturate(.6);}
-  html.reveal.revealing .stage{opacity:1; filter:none;
-    transition:opacity 2.6s cubic-bezier(.4,0,.2,1), filter 3.6s cubic-bezier(.3,0,.2,1);}
-  .reveal-veil{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse 60% 45% at 50% 46%, rgba(40,22,9,.55), rgba(0,0,0,0) 70%), #040201;
-    transition:opacity 2.2s cubic-bezier(.4,0,.2,1); cursor:pointer;}
-  .reveal-veil.lift{opacity:0; pointer-events:none;}
-  .reveal-card{text-align:center; color:#d8b46a; font-family:Georgia,'Times New Roman',serif;
-    opacity:0; transform:translateY(6px); letter-spacing:7px; padding:0 18px;
-    transition:opacity 1.4s ease, transform 1.8s cubic-bezier(.2,.7,.2,1), letter-spacing 2.4s cubic-bezier(.2,.7,.2,1);
-    text-shadow:0 1px 0 rgba(0,0,0,.8), 0 0 18px rgba(255,170,70,.18);}
-  .reveal-card.in{opacity:1; transform:none; letter-spacing:5px;}
-  .reveal-card .rc-name{font-size:clamp(16px, 4.8vw, 24px); text-transform:uppercase; white-space:nowrap; margin-right:-.3em;}
-  .reveal-card .rc-rule{width:64px; height:1px; margin:14px auto 12px;
-    background:linear-gradient(90deg, transparent, rgba(216,180,106,.8), transparent);}
-  .reveal-card .rc-sub{font-size:11px; letter-spacing:4px; text-transform:uppercase; color:rgba(216,180,106,.62);}
-  .reveal-veil.lift .reveal-card{opacity:0; transition:opacity .9s ease;}
-  @media (prefers-reduced-motion:reduce){
-    html.reveal.revealing .stage{transition:opacity .4s linear !important; filter:none;}
-    .reveal-veil{transition:opacity .4s linear !important;}
-    .reveal-card, .reveal-card.in{transform:none !important; letter-spacing:5px !important; transition:opacity .4s linear !important;}
-  }
 </style>
 </head>
 <body>
 <main class="stage">
-  <div class="seat">
   <div class="radio" id="radio">
-    <div class="lacquer" aria-hidden="true"></div>
-    <div class="inlay" aria-hidden="true"></div>
     <div class="dial" id="dial">
       <div class="dial-glass">
         <svg class="dial-arc" viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
@@ -644,21 +464,6 @@
           <linearGradient id="fretWood" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#4a2e14"/><stop offset=".5" stop-color="#2a1708"/><stop offset="1" stop-color="#140a02"/>
           </linearGradient>
-          <!-- the carver's chamfer: the wood's own outline used as a height map,
-               lit from the upper left, so every fretwork edge reads as a bevel -->
-          <filter id="fretBevel" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="h"/>
-            <feSpecularLighting in="h" surfaceScale="2.6" specularConstant=".7" specularExponent="16" lighting-color="#ffdcae" result="spec">
-              <feDistantLight azimuth="235" elevation="38"/>
-            </feSpecularLighting>
-            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
-            <feOffset in="h" dx="-.9" dy="-1.1" result="hs"/>
-            <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3=".42" k4="0" result="lit"/>
-            <feFlood flood-color="#000" flood-opacity=".38"/>
-            <feComposite in2="SourceAlpha" operator="in"/>
-            <feComposite in2="hs" operator="out" result="shade"/>
-            <feMerge><feMergeNode in="lit"/><feMergeNode in="shade"/></feMerge>
-          </filter>
           <!-- a pierced hole: near-black heart, a rim that warms where the light lands -->
           <radialGradient id="holeShade" cx=".5" cy=".38" r=".72">
             <stop offset="0" stop-color="#050302"/><stop offset=".62" stop-color="#140a04"/><stop offset="1" stop-color="#33200f"/>
@@ -697,12 +502,12 @@
             <circle cx="11" cy="3.7" r="4.4" fill="url(#holeShade)"/>
           </g>
         </defs>
-        <rect x="2" y="2" width="396" height="156" fill="none" stroke="url(#fretWood)" stroke-width="9" filter="url(#fretBevel)"/>
+        <rect x="2" y="2" width="396" height="156" fill="none" stroke="url(#fretWood)" stroke-width="9"/>
         <!-- the shadow the carved wood throws on the cloth: two soft falls -->
         <use href="#fretShapes" transform="translate(0,3)" stroke="rgba(8,3,0,.34)"/>
         <use href="#fretShapes" transform="translate(0,1.5)" stroke="rgba(8,3,0,.22)"/>
         <!-- the wood itself -->
-        <g filter="url(#fretBevel)"><use href="#fretShapes" stroke="url(#fretWood)"/></g>
+        <use href="#fretShapes" stroke="url(#fretWood)"/>
         <!-- and the piercings: holes, not rings -->
         <use href="#trefoilHoles" transform="translate(68,55.3)"/>
         <use href="#trefoilHoles" transform="translate(200,55.3)"/>
@@ -749,7 +554,6 @@
 
     <div class="nameplate"><span>CATHEDRAL</span></div>
   </div>
-  </div>
 
   <section class="now-card" id="nowCard" hidden aria-live="polite">
     <span class="screw tl" style="--r:24deg" aria-hidden="true"></span>
@@ -778,7 +582,6 @@
       </div>
       <button class="tone-btn tone-night" id="btnNight" aria-pressed="false" aria-label="Night mode: tames loud peaks for low listening">☾ Night</button>
     </div>
-    <div class="now-serial" id="nowSerial">Model 37</div>
   </section>
 
   <footer>
