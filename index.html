@@ -152,8 +152,13 @@
       inset 0 -10px 20px rgba(100,48,0,.38),
       inset 10px 0 18px rgba(110,54,0,.22),
       inset -10px 0 18px rgba(110,54,0,.22);
-    opacity:.42; transition:opacity 2.4s ease, box-shadow 2.4s ease;
+    opacity:.42; transition:opacity 2.4s ease, box-shadow 2.4s ease, filter 1.7s ease;
   }
+  /* the dial lamp's first moment: a cold filament barely red, before it
+     heats through to amber (app.js swaps .filament for .on) */
+  .dial.filament .dial-glass{opacity:.6;
+    filter:sepia(.5) hue-rotate(-34deg) saturate(2.4) brightness(.46);
+    transition:opacity .7s ease, box-shadow .7s ease, filter .7s ease;}
   .dial.on .dial-glass{opacity:1;
     box-shadow:
       inset 0 0 24px rgba(110,54,0,.5),
@@ -243,7 +248,7 @@
     box-shadow:inset 0 0 10px rgba(0,0,0,.9);
     transition:background 1.5s ease;
   }
-  .dial.on ~ * .eye-glass, .eye-glass.lit{
+  .eye-glass.lit{
     background:
       radial-gradient(circle at 50% 45%, #3cab5c 0%, #22753f 52%, #103a1d 88%, #0a2c14 100%);
     box-shadow:inset 0 0 12px rgba(120,255,150,.45), inset 0 0 4px rgba(200,255,210,.6),

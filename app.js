@@ -1053,8 +1053,10 @@
   });
 
   /* ---------- power ---------- */
+  var powerGen = 0;   // guards the warm-up ceremony against a quick off/on
   pow.addEventListener("click", function () {
     thunk(!powerOn); buzz(powerOn ? 14 : 20, true);
+    powerGen++;
     if (powerOn) {
       saveResume();   // powering down leaves every station where it was
       powerOn = false; isPlaying = false;
@@ -1065,7 +1067,7 @@
       ghostKill();
       drawEye(0.15);
       eyeGlass.classList.remove("lit");
-      dial.classList.remove("on");
+      dial.classList.remove("on"); dial.classList.remove("filament");
       pow.classList.remove("on");
       document.body.classList.remove("listening");
       paintReadout();
@@ -1082,24 +1084,31 @@
       applyMaster();
       if (!crackleTimer) crackle();
       if (!fadeTimer) fadeLoop();
-      dial.classList.add("on");
-      eyeGlass.classList.add("lit");
+      /* the warm-up, in the order a real set wakes:
+           0 ms     the pilot jewel — the switch is closed
+         ~180 ms    the dial lamp's filament glows a dull red…
+         ~950 ms    …and warms through to amber as it heats
+         ~1500 ms   the B+ relay pulls in: the tubes hum, the magic eye greens
+         ~1950 ms   and only then, sound — muffled at first, opening over ~2.6 s */
+      var pg = powerGen;
+      function stage(ms, fn) { setTimeout(function () { if (powerOn && pg === powerGen) fn(); }, ms); }
       pow.classList.add("on");
       status.textContent = "The tubes are warming…";
-      humOn();
-      setTimeout(function () { if (powerOn) relayTick(); }, 720);   // the B+ relay pulls in
-      /* the tubes heat: the broadcast fades from muffled to full over ~3 seconds */
+      stage(180, function () { dial.classList.add("filament"); });
+      stage(950, function () { dial.classList.remove("filament"); dial.classList.add("on"); });
+      stage(1500, function () { relayTick(); humOn(); eyeGlass.classList.add("lit"); drawEye(0.3); });
+      /* the tubes heat: the broadcast is held muffled until sound arrives, then opens out */
       if (AC && warmLP) {
-        warmLP.frequency.cancelScheduledValues(AC.currentTime);
-        warmLP.frequency.setValueAtTime(480, AC.currentTime);
-        warmLP.frequency.exponentialRampToValueAtTime(14000, AC.currentTime + 3);
+        var t0 = AC.currentTime;
+        warmLP.frequency.cancelScheduledValues(t0);
+        warmLP.frequency.setValueAtTime(480, t0);
+        warmLP.frequency.setValueAtTime(480, t0 + 1.95);
+        warmLP.frequency.exponentialRampToValueAtTime(14000, t0 + 4.6);
       }
       /* prefetch the first station's episodes while the tubes warm */
       var startIdx = curIdx < 0 ? 0 : curIdx;
       if (stations.length) fetchEpisodes(startIdx, function () {});
-      setTimeout(function () {
-        if (powerOn) tuneTo(curIdx < 0 ? 0 : curIdx);
-      }, 1100);
+      stage(1950, function () { tuneTo(curIdx < 0 ? 0 : curIdx); });
     }
   });
 
