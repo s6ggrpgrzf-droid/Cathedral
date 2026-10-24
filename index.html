@@ -48,13 +48,17 @@
     /* real veneer: generated-SVG grain figure under a lacquer finish */
     background:
       linear-gradient(115deg, rgba(255,255,255,.13) 0%, rgba(255,255,255,.02) 34%, rgba(255,255,255,0) 55%), /* lacquer sheen */
+      /* open walnut pores: fine dark flecks drawn out along the grain, filled under the lacquer */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.8' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.025 0 0 0 0 0.01 -7 0 0 0 2.55'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.7'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23p)'/%3E%3C/svg%3E"),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011 0.13' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.13 0 0 0 0 0.07 0 0 0 0 0.02 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='360' height='360' filter='url(%23w)'/%3E%3C/svg%3E"),
+      /* heartwood figure: slow red-brown streaks, so no two boards of the case read alike */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cfilter id='f' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035 0.028' numOctaves='3' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.15 0 0 0 0 0.05 1.6 0 0 0 -0.62'/%3E%3C/filter%3E%3Crect width='520' height='520' filter='url(%23f)'/%3E%3C/svg%3E"),
       radial-gradient(ellipse 34px 48px at 20% 38%, rgba(18,9,4,.28), transparent 70%),
       repeating-linear-gradient(91deg, rgba(14,7,3,.09) 0 2px, rgba(255,205,145,.03) 2px 4px, transparent 4px 17px),
       repeating-linear-gradient(0deg, rgba(20,10,4,.05) 0 2px, transparent 2px 13px),
       repeating-linear-gradient(89deg, transparent 0 78px, rgba(0,0,0,.12) 78px 81px, transparent 81px 160px),
       linear-gradient(180deg,#5d3a1d 0%,#402512 50%,#281605 100%);
-    background-size:auto, 360px 360px, auto, auto, auto, auto, auto;
+    background-size:auto, 240px 240px, 360px 360px, 520px 520px, auto, auto, auto, auto, auto;
     border:2px solid #1d0f05;
     box-shadow:
       0 30px 70px rgba(0,0,0,.7),
@@ -86,13 +90,32 @@
     pointer-events:none;}
   /* the cathedral figure: arched grain flowing over the top of the veneer,
      fading as it runs down the case (behind the fittings, above the finish) */
-  .radio::after{content:""; position:absolute; inset:0; z-index:-1;
+  .radio::after{content:""; position:absolute; inset:0; z-index:-2;
     border-radius:inherit; pointer-events:none;
     background:repeating-radial-gradient(ellipse 108% 64% at 50% -8%,
       transparent 0 40px, rgba(16,8,3,.14) 40px 42px,
       rgba(255,206,150,.05) 42px 44px, transparent 44px 84px);
     -webkit-mask-image:linear-gradient(180deg,#000 26%, transparent 76%);
             mask-image:linear-gradient(180deg,#000 26%, transparent 76%);}
+
+  /* the clearcoat: a deep, rubbed-out lacquer lying over the veneer — one broad
+     soft reflection of the room's lamp across the crown, a glancing streak down
+     the left shoulder, and the faint wet depth a hand-rubbed finish has */
+  .lacquer{position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none;
+    background:
+      radial-gradient(38% 15% at 36% 9%, rgba(255,240,210,.24), rgba(255,240,210,0) 70%),
+      radial-gradient(9% 34% at 9% 44%, rgba(255,232,195,.10), rgba(255,232,195,0) 72%),
+      linear-gradient(102deg, rgba(255,236,200,0) 18%, rgba(255,236,200,.07) 24%, rgba(255,236,200,0) 31%),
+      radial-gradient(120% 70% at 50% 110%, rgba(0,0,0,.18), rgba(0,0,0,0) 60%);
+    box-shadow:inset 0 0 0 1px rgba(255,230,190,.05);}
+  /* holly stringing: a hairline of pale boxwood between two ebony lines, let
+     into the case just outside the brass trim — the cabinetmaker's signature */
+  .inlay{position:absolute; inset:5.5px; z-index:-1; pointer-events:none;
+    border-radius:235px 235px 15px 15px / 195px 195px 15px 15px;
+    border:1.6px solid rgba(226,204,156,.62);
+    box-shadow:0 0 0 1px rgba(14,7,2,.72), inset 0 0 0 1px rgba(14,7,2,.66), inset 0 1px 0 1px rgba(255,240,205,.08);
+    -webkit-mask-image:linear-gradient(180deg,#000 0%, #000 62%, rgba(0,0,0,.55) 100%);
+            mask-image:linear-gradient(180deg,#000 0%, #000 62%, rgba(0,0,0,.55) 100%);}
 
   /* ---- the dial: a curved glass arc with a printed frequency scale ---- */
   .dial{
@@ -437,6 +460,8 @@
 <body>
 <main class="stage">
   <div class="radio" id="radio">
+    <div class="lacquer" aria-hidden="true"></div>
+    <div class="inlay" aria-hidden="true"></div>
     <div class="dial" id="dial">
       <div class="dial-glass">
         <svg class="dial-arc" viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
@@ -473,6 +498,21 @@
           <linearGradient id="fretWood" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#4a2e14"/><stop offset=".5" stop-color="#2a1708"/><stop offset="1" stop-color="#140a02"/>
           </linearGradient>
+          <!-- the carver's chamfer: the wood's own outline used as a height map,
+               lit from the upper left, so every fretwork edge reads as a bevel -->
+          <filter id="fretBevel" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="h"/>
+            <feSpecularLighting in="h" surfaceScale="2.6" specularConstant=".7" specularExponent="16" lighting-color="#ffdcae" result="spec">
+              <feDistantLight azimuth="235" elevation="38"/>
+            </feSpecularLighting>
+            <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+            <feOffset in="h" dx="-.9" dy="-1.1" result="hs"/>
+            <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3=".42" k4="0" result="lit"/>
+            <feFlood flood-color="#000" flood-opacity=".38"/>
+            <feComposite in2="SourceAlpha" operator="in"/>
+            <feComposite in2="hs" operator="out" result="shade"/>
+            <feMerge><feMergeNode in="lit"/><feMergeNode in="shade"/></feMerge>
+          </filter>
           <!-- a pierced hole: near-black heart, a rim that warms where the light lands -->
           <radialGradient id="holeShade" cx=".5" cy=".38" r=".72">
             <stop offset="0" stop-color="#050302"/><stop offset=".62" stop-color="#140a04"/><stop offset="1" stop-color="#33200f"/>
@@ -511,12 +551,12 @@
             <circle cx="11" cy="3.7" r="4.4" fill="url(#holeShade)"/>
           </g>
         </defs>
-        <rect x="2" y="2" width="396" height="156" fill="none" stroke="url(#fretWood)" stroke-width="9"/>
+        <rect x="2" y="2" width="396" height="156" fill="none" stroke="url(#fretWood)" stroke-width="9" filter="url(#fretBevel)"/>
         <!-- the shadow the carved wood throws on the cloth: two soft falls -->
         <use href="#fretShapes" transform="translate(0,3)" stroke="rgba(8,3,0,.34)"/>
         <use href="#fretShapes" transform="translate(0,1.5)" stroke="rgba(8,3,0,.22)"/>
         <!-- the wood itself -->
-        <use href="#fretShapes" stroke="url(#fretWood)"/>
+        <g filter="url(#fretBevel)"><use href="#fretShapes" stroke="url(#fretWood)"/></g>
         <!-- and the piercings: holes, not rings -->
         <use href="#trefoilHoles" transform="translate(68,55.3)"/>
         <use href="#trefoilHoles" transform="translate(200,55.3)"/>
