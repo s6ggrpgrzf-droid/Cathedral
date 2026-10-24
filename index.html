@@ -168,6 +168,20 @@
   .dial-glass::before{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
     background:radial-gradient(58% 44% at 50% 16%, rgba(255,242,205,.55), transparent 70%);
     opacity:calc(.18 + var(--glow, .5) * .55);}
+  /* the glass itself, in front of the scale: a thin bright edge where the
+     curved pane turns away, the soft window of the room light lying across it
+     (it drifts with --lx), a sprinkle of dust that settled on the inside, and
+     an uneven falloff — the lamp sits a touch left of centre, so the amber
+     dies faster into the right shoulder and the lower corners */
+  .dial-glass::after{content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:3;
+    background:
+      radial-gradient(52% 30% at 50% 2%, rgba(255,252,240,0) 82%, rgba(255,252,240,.30) 92%, rgba(255,252,240,0) 100%),
+      linear-gradient(112deg, rgba(255,255,255,0) calc(30% + var(--lx,0) * 8%), rgba(255,255,255,.10) calc(36% + var(--lx,0) * 8%), rgba(255,255,255,.03) calc(44% + var(--lx,0) * 8%), rgba(255,255,255,0) calc(47% + var(--lx,0) * 8%)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='d' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' seed='31' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 0.97 0 0 0 0 0.9 9 0 0 0 -6.5'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.24'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23d)'/%3E%3Cpath d='M41 62q5 -3 9 1M128 131q3 4 8 2M150 40q-2 5 2 8' fill='none' stroke='rgba(255,248,230,.16)' stroke-width='.45'/%3E%3C/svg%3E") 0 0 / 180px 180px,
+      radial-gradient(70% 120% at 100% 100%, rgba(80,36,0,.26), rgba(80,36,0,0) 60%),
+      radial-gradient(50% 90% at 0% 100%, rgba(80,36,0,.20), rgba(80,36,0,0) 62%),
+      radial-gradient(120% 140% at 44% 40%, rgba(90,40,0,0) 55%, rgba(90,40,0,.16) 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,248,225,.10), inset 0 1.5px 0 rgba(255,252,240,.22);}
   .dial-arc{position:absolute; left:6px; right:6px; top:10px; height:40px; width:calc(100% - 12px); z-index:0; pointer-events:none;}
   .dial-band{position:relative; height:44px; z-index:1;}
   /* the station readout: a backlit slot under the glass — the tuned
@@ -260,6 +274,16 @@
     box-shadow:inset 0 3px 14px rgba(0,0,0,.75), inset 0 0 34px rgba(0,0,0,.5);
     overflow:hidden;
   }
+  /* the tubes' glow, seen through the cloth from behind: an orange warmth low
+     in the middle that comes up slowly once the set is on and the
+     filaments are hot — never bright enough to show the chassis */
+  .grille::before{content:""; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(34% 46% at 50% 66%, rgba(255,150,60,.30), rgba(255,130,40,.10) 55%, rgba(255,120,30,0) 100%),
+      radial-gradient(16% 26% at 30% 70%, rgba(255,170,80,.12), rgba(255,170,80,0) 100%),
+      radial-gradient(16% 26% at 70% 70%, rgba(255,170,80,.10), rgba(255,170,80,0) 100%);
+    mix-blend-mode:screen; opacity:0; transition:opacity 3.2s ease .6s;}
+  .dial.on ~ .grille::before{opacity:1;}
   .grille .fret{position:absolute; inset:0; width:100%; height:100%; display:block; transform-origin:50% 55%;}
   .grille::after{content:""; position:absolute; inset:0; pointer-events:none;
     background:radial-gradient(60% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.45) 100%);}
@@ -490,6 +514,7 @@
     body{transition:none !important;}
     body::after{transition:none !important;}
     .knob .ptr{transition:none !important;}
+    .grille::before{transition:none !important;}
     .power .jewel{transition:none !important;}
   }
 </style>
