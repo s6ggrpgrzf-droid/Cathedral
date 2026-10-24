@@ -218,7 +218,8 @@
     background:#a01818; border-radius:2px; z-index:1;
     /* a painted sliver of metal: on a dark set it casts no light of its own */
     box-shadow:0 0 2px rgba(0,0,0,.45);
-    transition:left .8s cubic-bezier(.6,0,.3,1), box-shadow 1.6s ease;
+    /* a stepped tune carries the needle with weight: slow to start, a hair past, home */
+    transition:left .95s cubic-bezier(.55,0,.22,1.12), box-shadow 1.6s ease;
   }
   /* the red halo belongs to the dial lamp — it exists only while the set is on,
      blooming in and fading out with the warm-up rather than snapping */
@@ -332,7 +333,7 @@
     touch-action:none;
   }
   .knob:focus-visible{outline:2px solid #ffd98a; outline-offset:3px;}
-  .knob .ptr{position:absolute; inset:0; transition:transform .18s ease;}
+  .knob .ptr{position:absolute; inset:0;}   /* turned by a spring in app.js */
   .knob .ptr::before{content:""; position:absolute; left:50%; top:5px; width:5px; height:14px;
     margin-left:-2.5px; border-radius:3px; background:#f2d492;
     box-shadow:0 0 5px rgba(0,0,0,.6);}
@@ -353,13 +354,13 @@
       inset 0 2px 3px rgba(255,240,210,.35),
       inset 0 -4px 7px rgba(0,0,0,.55);
     display:flex; align-items:center; justify-content:center;
-    transition:transform .08s ease;
+    transition:transform .13s cubic-bezier(.3,0,.2,1);
   }
   .power:focus-visible{outline:2px solid #ffd98a; outline-offset:3px;}
   .power:active{transform:translateY(1px);}
   .power .jewel{width:11px; height:11px; border-radius:50%;
     background:radial-gradient(circle at 40% 35%, #6b4a22, #38260a);
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.85); transition:all .35s ease;}
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.85); transition:all .5s ease;}
   .power.on .jewel{
     background:radial-gradient(circle at 40% 35%, #ffdda6, #ff9d2e 60%, #c56f10);
     box-shadow:0 0 11px rgba(255,170,60,.95), inset 0 0 2px rgba(255,255,255,.7);}
@@ -427,7 +428,8 @@
       radial-gradient(130% 150% at 50% 0%, #4b3520, #221304 72%);
     border:1px solid #140b02;
     box-shadow:inset 0 1px 0 rgba(255,232,180,.3), inset 0 -2px 4px rgba(0,0,0,.6), 0 3px 7px rgba(59,38,8,.5);}
-  .now-btn:active{transform:translateY(1px);}
+  .now-btn{transition:transform .12s cubic-bezier(.3,0,.2,1), box-shadow .12s ease;}
+  .now-btn:active{transform:translateY(1.5px); box-shadow:inset 0 1px 0 rgba(255,232,180,.2), inset 0 -1px 3px rgba(0,0,0,.6), 0 1px 3px rgba(59,38,8,.5);}
   .now-btn:focus-visible{outline:2px solid #3a2410; outline-offset:2px;}
   .now-btn:disabled{opacity:.38; cursor:default; transform:none;}
   .now-btn.now-play{min-width:58px; font-size:15px; color:#2a1a05;
@@ -516,6 +518,7 @@
     .knob .ptr{transition:none !important;}
     .grille::before{transition:none !important;}
     .power .jewel{transition:none !important;}
+    .power, .now-btn{transition:none !important;}
   }
 </style>
 </head>

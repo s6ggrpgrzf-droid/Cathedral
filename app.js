@@ -730,6 +730,27 @@
     setTimeout(function () { if (powerOn) tuneTo(g); }, 700);
   }
 
+  /* ---------- the knobs have weight: a pointer never snaps to its angle,
+     it is carried there by a soft spring — a little lag as it gets going,
+     a few degrees past, and a settle — the feel of a heavy Bakelite knob on
+     a greased shaft. Reduced motion: it simply sits at its angle. ---------- */
+  function knobSpring(el) {
+    var a = null, v = 0, t = 0, raf = 0;
+    function write() { el.style.transform = "rotate(" + a.toFixed(2) + "deg)"; }
+    function step() {
+      raf = 0;
+      v += (t - a) * 0.18; v *= 0.62; a += v;
+      if (Math.abs(t - a) < 0.05 && Math.abs(v) < 0.05) { a = t; v = 0; write(); return; }
+      write(); raf = requestAnimationFrame(step);
+    }
+    return function (deg) {
+      t = deg;
+      if (a === null || REDUCED) { a = deg; v = 0; write(); return; }
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+  }
+  var turnTune = knobSpring(tunePtr), turnVol = knobSpring(volPtr);
+
   /* ---------- tuning: the needle has mass — a spring chases your finger,
      and the station pulls it the last of the way in ---------- */
   function stationPos(i) { return 13 + (i / Math.max(1, stations.length - 1)) * 74; }
@@ -773,7 +794,7 @@
     notchTick();
     paintReadout();
     /* the tuning knob turns LIVE with the needle, not only at lock */
-    if (stations.length > 1) tunePtr.style.transform = "rotate(" + (-135 + ((sweepPos - 13) / 74) * 270) + "deg)";
+    if (stations.length > 1) turnTune(-135 + ((sweepPos - 13) / 74) * 270);
     var n = distToNearest(sweepPos);
     var spacing = stations.length > 1 ? 74 / (stations.length - 1) : 74;
     var ratio = Math.min(1, n.dist / (spacing / 2));
@@ -795,8 +816,11 @@
       if (!sweeping && lockIdx >= 0) { var li = lockIdx; lockIdx = -1; lockFeel(); tuneTo(li); }
       return;
     }
-    sweepVel += (sweepTarget - sweepPos) * 0.16;
-    sweepVel *= 0.68;
+    /* under the hand the needle is heavy and well damped; let go, and the
+       station pulls it in on a looser spring — a hair past, then home */
+    var locking = !sweeping && lockIdx >= 0;
+    sweepVel += (sweepTarget - sweepPos) * (locking ? 0.09 : 0.11);
+    sweepVel *= locking ? 0.76 : 0.65;
     sweepPos += sweepVel;
     if (sweepPos < 5) { sweepPos = 5; sweepVel = 0; }
     if (sweepPos > 95) { sweepPos = 95; sweepVel = 0; }
@@ -842,7 +866,7 @@
     lastNotch = Math.round((sweepPos - 13) / DETENT);
     var st = stations[curIdx], gen = ++tuneGen;
     needle.style.left = sweepPos + "%";
-    tunePtr.style.transform = "rotate(" + (-135 + (curIdx / Math.max(1, stations.length - 1)) * 270) + "deg)";
+    turnTune(-135 + (curIdx / Math.max(1, stations.length - 1)) * 270);
     paintReadout();
     status.textContent = "Tuning…";
     document.body.classList.remove("listening");
@@ -985,7 +1009,7 @@
   })();
   /* ---------- volume knob: turns the MASTER gain (every sound obeys) ---------- */
   function paintVol() {
-    volPtr.style.transform = "rotate(" + (-135 + (muted ? 0 : volLevel) * 270) + "deg)";
+    turnVol(-135 + (muted ? 0 : volLevel) * 270);
   }
   player.volume = 1;   // the element stays at full; the master gain does the work
   paintVol();
