@@ -1,7 +1,7 @@
 /* Cathedral service worker — the shell lives on the device, so the set
    opens instantly and even shows its face offline. Broadcasts and Archive
    metadata are never cached here (episode lists have their own store). */
-var CACHE = "cathedral-shell-v1";
+var CACHE = "cathedral-shell-v2";
 var SHELL = ["./", "./index.html", "./app.js", "./stations.json", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
