@@ -1143,6 +1143,37 @@
     })
     .catch(function () { stations = []; });
 
+  /* ---------- first launch: the set fades up from darkness, once. A small
+     card names it, then lifts itself (or on a tap) and is never shown again. */
+  (function reveal() {
+    var root = document.documentElement;
+    if (!/\breveal\b/.test(root.className)) return;
+    try { localStorage.setItem("cathedral_seen_v1", "1"); } catch (e) {}
+    var veil = document.createElement("div");
+    veil.className = "reveal-veil";
+    veil.setAttribute("role", "presentation");
+    veil.innerHTML = '<div class="reveal-card"><div class="rc-name">Cathedral \u00b7 Model 37</div>' +
+      '<div class="rc-rule"></div><div class="rc-sub">No. ' + serialNo + '</div></div>';
+    document.body.appendChild(veil);
+    var card = veil.firstChild, done = false, timers = [];
+    function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function finish() {
+      if (veil.parentNode) veil.parentNode.removeChild(veil);
+      root.className = root.className.replace(/\s*\b(reveal|revealing)\b/g, "");
+    }
+    function lift() {
+      if (done) return; done = true;
+      timers.forEach(clearTimeout);
+      veil.classList.add("lift");
+      root.classList.add("revealing");
+      setTimeout(finish, REDUCED ? 500 : 3700);
+    }
+    requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.add("in"); }); });
+    later(REDUCED ? 1800 : 2900, lift);
+    veil.addEventListener("click", lift);
+    document.addEventListener("keydown", function k() { document.removeEventListener("keydown", k); lift(); });
+  })();
+
   /* the shell lives on the device: instant opens, and the set shows its
      face even with no signal (broadcasts still need the network, honestly) */
   if ("serviceWorker" in navigator) {

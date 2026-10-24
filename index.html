@@ -10,6 +10,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cathedral">
+<script>
+  /* first launch only: hold the set in darkness before the first paint, so
+     the reveal never flashes the finished room first */
+  try { if (!localStorage.getItem("cathedral_seen_v1")) {
+    document.documentElement.className += " reveal";
+    /* if the set's works never load, don't leave the room dark */
+    setTimeout(function () { if (!document.querySelector(".reveal-veil")) document.documentElement.className = document.documentElement.className.replace(/\s*\breveal\b/g, ""); }, 4000);
+  } } catch (e) {}
+</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
@@ -568,6 +577,29 @@
     .power .jewel{transition:none !important;}
     .power, .now-btn{transition:none !important;}
   }
+  /* ---------- first-launch reveal: the set fades up out of a dark room ---------- */
+  html.reveal .stage{opacity:0; filter:brightness(.15) saturate(.6);}
+  html.reveal.revealing .stage{opacity:1; filter:none;
+    transition:opacity 2.6s cubic-bezier(.4,0,.2,1), filter 3.6s cubic-bezier(.3,0,.2,1);}
+  .reveal-veil{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse 60% 45% at 50% 46%, rgba(40,22,9,.55), rgba(0,0,0,0) 70%), #040201;
+    transition:opacity 2.2s cubic-bezier(.4,0,.2,1); cursor:pointer;}
+  .reveal-veil.lift{opacity:0; pointer-events:none;}
+  .reveal-card{text-align:center; color:#d8b46a; font-family:Georgia,'Times New Roman',serif;
+    opacity:0; transform:translateY(6px); letter-spacing:7px; padding:0 18px;
+    transition:opacity 1.4s ease, transform 1.8s cubic-bezier(.2,.7,.2,1), letter-spacing 2.4s cubic-bezier(.2,.7,.2,1);
+    text-shadow:0 1px 0 rgba(0,0,0,.8), 0 0 18px rgba(255,170,70,.18);}
+  .reveal-card.in{opacity:1; transform:none; letter-spacing:5px;}
+  .reveal-card .rc-name{font-size:clamp(16px, 4.8vw, 24px); text-transform:uppercase; white-space:nowrap; margin-right:-.3em;}
+  .reveal-card .rc-rule{width:64px; height:1px; margin:14px auto 12px;
+    background:linear-gradient(90deg, transparent, rgba(216,180,106,.8), transparent);}
+  .reveal-card .rc-sub{font-size:11px; letter-spacing:4px; text-transform:uppercase; color:rgba(216,180,106,.62);}
+  .reveal-veil.lift .reveal-card{opacity:0; transition:opacity .9s ease;}
+  @media (prefers-reduced-motion:reduce){
+    html.reveal.revealing .stage{transition:opacity .4s linear !important; filter:none;}
+    .reveal-veil{transition:opacity .4s linear !important;}
+    .reveal-card, .reveal-card.in{transform:none !important; letter-spacing:5px !important; transition:opacity .4s linear !important;}
+  }
 </style>
 </head>
 <body>
@@ -759,6 +791,6 @@
 </main>
 
 <audio id="player" preload="none" crossorigin="anonymous"></audio>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
