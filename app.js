@@ -79,6 +79,17 @@
   } catch (e) {}
   function persistEpCache() { try { localStorage.setItem("cathedral_eps_v2", JSON.stringify({ ts: epCacheTs, lists: epCache })); } catch (e) {} }
 
+  /* ---------- the set's serial number: four digits stamped once, at the
+     factory (this install's first open), and kept for good ---------- */
+  var serialNo = "";
+  try { serialNo = localStorage.getItem("cathedral_serial_v1") || ""; } catch (e) {}
+  if (!/^\d{4}$/.test(serialNo)) {
+    serialNo = ("000" + (1 + Math.floor(Math.random() * 9999))).slice(-4);
+    try { localStorage.setItem("cathedral_serial_v1", serialNo); } catch (e) {}
+  }
+  var serialEl = $("nowSerial");
+  if (serialEl) serialEl.textContent = "Model 37 \u00b7 No. " + serialNo;
+
   /* ---------- knob tick rings (11 ticks, majors at the ends and centre) ---------- */
   document.querySelectorAll("[data-ticks]").forEach(function (box) {
     for (var i = 0; i <= 10; i++) {
@@ -1149,6 +1160,7 @@
     get glow() { return glowShown; },
     get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
+    get serial() { return serialNo; },
     get readout() { return stationReadout.textContent + "|" + stationReadout.className; },
     get fx() { return { bus: fx, detent: detent, thunk: thunk, relay: relayTick, click: click, lock: lockFeel }; },
     tune: tuneTo,

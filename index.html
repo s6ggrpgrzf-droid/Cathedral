@@ -45,6 +45,35 @@
   body.listening::after{opacity:1;}
 
   .stage{max-width:560px; margin:0 auto; position:relative; z-index:2;}
+  body{overflow-x:hidden; overflow-x:clip;}   /* the sideboard runs off both edges of the picture */
+
+  /* ---- the sideboard: the set stands on a dark polished top, shot like a
+     catalogue photograph — the far edge falls into shadow, the near edge
+     catches the key light along its rounded lip, and the set's lamp warms
+     the finish in front of it ---- */
+  .seat{position:relative; isolation:isolate; max-width:480px; margin:0 auto;}
+  .seat::before{content:""; position:absolute; z-index:-2; left:50%; width:100vw; transform:translateX(-50%);
+    bottom:-40px; height:110px; pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0) calc(100% - 11px), rgba(255,214,160,.30) calc(100% - 10px), rgba(255,214,160,.08) calc(100% - 7px), rgba(0,0,0,.55) calc(100% - 3px), rgba(0,0,0,.85) 100%),
+      /* the set's reflection, blurred in the polish just in front of the plinth */
+      radial-gradient(40% 26% at 50% calc(100% - 30px), rgba(120,72,34,.30), rgba(120,72,34,0) 100%),
+      radial-gradient(34% 60% at 50% 46%, rgba(255,190,110,.12), rgba(255,190,110,0) 75%),
+      radial-gradient(60% 90% at 50% 100%, rgba(255,220,170,.07), rgba(255,220,170,0) 70%),
+      repeating-linear-gradient(178.6deg, rgba(0,0,0,.16) 0 1px, rgba(0,0,0,0) 1px 4px, rgba(255,210,160,.025) 4px 5px, rgba(0,0,0,0) 5px 9px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='120'%3E%3Cfilter id='g' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0025 0.11' numOctaves='3' seed='41' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.02 0 0 0 0 0.01 0 0 0 0 0 1.5 0 0 0 -0.55'/%3E%3C/filter%3E%3Crect width='600' height='120' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 600px 100%,
+      linear-gradient(180deg, #0c0603 0%, #1b0f07 38%, #2d1a0c 76%, #3b2413 calc(100% - 11px), #160b04 100%);
+    -webkit-mask-image:linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+            mask-image:linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+    transition:filter 1.6s ease;}
+  body.listening .seat::before{filter:brightness(.82);}
+  /* contact shadow: soft and wide where the case leans its weight, tight and
+     near-black right under the plinth */
+  .seat::after{content:""; position:absolute; z-index:-1; pointer-events:none;
+    left:1%; right:1%; bottom:-22px; height:40px;
+    background:
+      radial-gradient(46% 22% at 50% 38%, rgba(0,0,0,.82), rgba(0,0,0,0) 100%),
+      radial-gradient(54% 50% at 50% 40%, rgba(0,0,0,.55), rgba(0,0,0,0) 100%);}
 
   .site-sub{text-align:center; margin:0 auto 10px; font-size:13.5px; color:#8a755a; font-style:italic;}
 
@@ -70,8 +99,8 @@
     background-size:auto, 240px 240px, 360px 360px, 520px 520px, auto, auto, auto, auto, auto;
     border:2px solid #1d0f05;
     box-shadow:
-      0 30px 70px rgba(0,0,0,.7),
-      0 8px 22px rgba(0,0,0,.5),
+      0 -6px 60px rgba(0,0,0,.55),   /* standing on the sideboard: the case shades the wall, not the floor */
+      0 6px 14px rgba(0,0,0,.45),
       0 0 80px 8px rgba(255,190,110,0),
       inset 0 2px 0 rgba(255,235,185,.38),       /* bevelled top edge catching light */
       inset 0 -6px 16px rgba(0,0,0,.55),
@@ -82,8 +111,8 @@
   }
   body.listening .radio{
     box-shadow:
-      0 30px 70px rgba(0,0,0,.7),
-      0 8px 22px rgba(0,0,0,.5),
+      0 -6px 60px rgba(0,0,0,.55),   /* standing on the sideboard: the case shades the wall, not the floor */
+      0 6px 14px rgba(0,0,0,.45),
       0 0 80px 8px rgba(255,190,110,.14),
       inset 0 2px 0 rgba(255,235,185,.38),
       inset 0 -6px 16px rgba(0,0,0,.55),
@@ -377,12 +406,21 @@
       var(--scratch) 0 0 / 150px 150px,
       var(--brush) 0 0 / 200px 100px,
       linear-gradient(180deg,#c8a04a,#8a6a2f); color:#2a1c08;
-    font-size:12px; letter-spacing:5px; font-weight:700;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(0,0,0,.5);}
+    font-size:12px; letter-spacing:5.5px; font-weight:700; position:relative;
+    /* letters cut into the brass: a dark floor, light on the lower lip, shade under the upper */
+    color:#24170a; text-shadow:0 1px 0 rgba(255,242,205,.6), 0 -1px 0 rgba(48,30,6,.42);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(70,45,10,.45),
+      inset 0 0 0 3px rgba(0,0,0,0), inset 0 0 0 3.5px rgba(70,45,10,.30),
+      0 1px 0 rgba(20,10,4,.9), 0 2px 6px rgba(0,0,0,.5);}
+  /* two brass escutcheon pins hold the nameplate */
+  .nameplate span::before, .nameplate span::after{content:""; position:absolute; top:50%; width:4px; height:4px; margin-top:-2px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f6e4a6, #9c7a32 70%, #5f471a);
+    box-shadow:0 .5px 0 rgba(255,244,205,.4), inset 0 -.5px 1px rgba(43,28,4,.6);}
+  .nameplate span::before{left:6px;} .nameplate span::after{right:6px;}
 
   /* ---- now on the air: a brass maker's plate, screwed down under the set ---- */
   .now-card{
-    position:relative; max-width:480px; margin:18px auto 0; padding:16px 20px 14px;
+    position:relative; max-width:480px; margin:52px auto 0; padding:16px 20px 14px;
     border-radius:8px; text-align:center; color:#2e1c08;
     background:
       var(--scratch) 0 0 / 300px 300px,
@@ -418,11 +456,14 @@
     text-shadow:0 1px 0 rgba(255,244,205,.45);}
   .now-lamp::before{content:"● "; color:#ff9d2e; text-shadow:0 0 8px rgba(255,157,46,.9), 0 0 2px rgba(120,50,0,.6);}
   /* lettering engraved into the brass: dark cut, light catching the lower edge */
-  .now-show{font-size:20px; font-weight:700; color:#2e1c08; margin-top:5px; line-height:1.25;
-    text-shadow:0 1px 0 rgba(255,244,205,.5);}
-  .now-tag{font-size:13px; font-style:italic; color:#5d3f1c; margin-top:2px; text-shadow:0 1px 0 rgba(255,244,205,.35);}
-  .now-ep{font-size:14.5px; color:#2e1c08; margin-top:9px; line-height:1.45; text-shadow:0 1px 0 rgba(255,244,205,.35);}
-  .now-date{font-size:12px; color:#654a1e; margin-top:2px; letter-spacing:.4px;}
+  .now-show{font-size:20px; font-weight:700; color:#2a1906; margin-top:5px; line-height:1.25; letter-spacing:.2px;
+    text-shadow:0 1px 0 rgba(255,244,205,.58), 0 -1px 0 rgba(46,28,6,.28);}
+  .now-tag{font-size:13px; font-style:italic; color:#563a18; margin-top:2px; text-shadow:0 1px 0 rgba(255,244,205,.42), 0 -1px 0 rgba(46,28,6,.16);}
+  .now-ep{font-size:14.5px; color:#2a1906; margin-top:9px; line-height:1.45; text-shadow:0 1px 0 rgba(255,244,205,.42), 0 -1px 0 rgba(46,28,6,.18);}
+  .now-date{font-size:12px; color:#5e4419; margin-top:2px; letter-spacing:.4px; text-shadow:0 1px 0 rgba(255,244,205,.35);}
+  /* the set's own number, stamped small at the foot of the plate */
+  .now-serial{margin-top:11px; font-size:8.5px; letter-spacing:3.2px; font-weight:700; text-transform:uppercase;
+    color:#4d3612; text-shadow:0 1px 0 rgba(255,244,205,.5), 0 -1px 0 rgba(46,28,6,.3); font-variant-numeric:oldstyle-nums;}
   .now-controls{display:flex; justify-content:center; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;}
   /* transport keys seated on the plate: dark bakelite, one brass play key */
   .now-btn{min-height:42px; padding:8px 13px; border-radius:24px; cursor:pointer;
@@ -506,7 +547,9 @@
     .power{width:34px; height:34px;}
     .nameplate{margin-top:8px;}
     .nameplate span{font-size:10px; padding:4px 14px 3px;}
-    .now-card{margin-top:10px; padding:9px 12px 8px;}
+    .now-card{margin-top:30px; padding:9px 12px 8px;}
+    .seat::before{height:64px; bottom:-20px;}
+    .now-serial{margin-top:6px;}
     .now-show{font-size:16px;}
     .now-controls{margin-top:8px;}
     .now-btn{min-height:36px; padding:6px 10px; font-size:12px;}
@@ -529,6 +572,7 @@
 </head>
 <body>
 <main class="stage">
+  <div class="seat">
   <div class="radio" id="radio">
     <div class="lacquer" aria-hidden="true"></div>
     <div class="inlay" aria-hidden="true"></div>
@@ -673,6 +717,7 @@
 
     <div class="nameplate"><span>CATHEDRAL</span></div>
   </div>
+  </div>
 
   <section class="now-card" id="nowCard" hidden aria-live="polite">
     <span class="screw tl" style="--r:24deg" aria-hidden="true"></span>
@@ -701,6 +746,7 @@
       </div>
       <button class="tone-btn tone-night" id="btnNight" aria-pressed="false" aria-label="Night mode: tames loud peaks for low listening">☾ Night</button>
     </div>
+    <div class="now-serial" id="nowSerial">Model 37</div>
   </section>
 
   <footer>
