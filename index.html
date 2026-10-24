@@ -103,9 +103,9 @@
      the left shoulder, and the faint wet depth a hand-rubbed finish has */
   .lacquer{position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none;
     background:
-      radial-gradient(38% 15% at 36% 9%, rgba(255,240,210,.24), rgba(255,240,210,0) 70%),
-      radial-gradient(9% 34% at 9% 44%, rgba(255,232,195,.10), rgba(255,232,195,0) 72%),
-      linear-gradient(102deg, rgba(255,236,200,0) 18%, rgba(255,236,200,.07) 24%, rgba(255,236,200,0) 31%),
+      radial-gradient(38% 15% at calc(36% + var(--lx,0) * 9%) calc(9% + var(--ly,0) * 4%), rgba(255,240,210,.24), rgba(255,240,210,0) 70%),
+      radial-gradient(9% 34% at calc(9% + var(--lx,0) * 3%) calc(44% + var(--ly,0) * 10%), rgba(255,232,195,.10), rgba(255,232,195,0) 72%),
+      linear-gradient(102deg, rgba(255,236,200,0) calc(18% + var(--lx,0) * 6%), rgba(255,236,200,.07) calc(24% + var(--lx,0) * 6%), rgba(255,236,200,0) calc(31% + var(--lx,0) * 6%)),
       radial-gradient(120% 70% at 50% 110%, rgba(0,0,0,.18), rgba(0,0,0,0) 60%);
     box-shadow:inset 0 0 0 1px rgba(255,230,190,.05);}
   /* holly stringing: a hairline of pale boxwood between two ebony lines, let
@@ -266,7 +266,7 @@
   .knob-ticks i.major{height:10px; width:2.5px; background:#d8b25e;}
   .knob-esc{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:78px; height:78px; border-radius:50%;
-    background:radial-gradient(circle at 36% 30%, #e6c877 0%, #a37c34 52%, #5f431a 100%);
+    background:radial-gradient(circle at calc(36% + var(--lx,0) * 8%) calc(30% + var(--ly,0) * 8%), #e6c877 0%, #a37c34 52%, #5f431a 100%);
     box-shadow:0 3px 8px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,245,210,.7), inset 0 -2px 4px rgba(0,0,0,.45);
     display:flex; align-items:center; justify-content:center;}
   .knob-skirt{width:66px; height:66px; border-radius:50%;
@@ -317,7 +317,8 @@
   /* nameplate */
   .nameplate{text-align:center; margin-top:16px;}
   .nameplate span{display:inline-block; padding:5px 18px 4px; border-radius:3px;
-    background:linear-gradient(180deg,#c8a04a,#8a6a2f); color:#2a1c08;
+    background:radial-gradient(60% 140% at calc(35% + var(--lx,0) * 30%) 0%, rgba(255,246,214,.30), rgba(255,246,214,0) 70%),
+      linear-gradient(180deg,#c8a04a,#8a6a2f); color:#2a1c08;
     font-size:12px; letter-spacing:5px; font-weight:700;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 6px rgba(0,0,0,.5);}
 
@@ -327,7 +328,7 @@
     border-radius:8px; text-align:center; color:#2e1c08;
     background:
       repeating-linear-gradient(90deg, rgba(255,255,255,.028) 0 2px, rgba(59,38,8,.028) 2px 4px),
-      radial-gradient(120% 90% at 50% 0%, rgba(255,244,205,.26), rgba(255,244,205,0) 55%),
+      radial-gradient(120% 90% at calc(50% + var(--lx,0) * 16%) calc(0% + var(--ly,0) * 12%), rgba(255,244,205,.26), rgba(255,244,205,0) 55%),
       radial-gradient(60% 50% at 12% 88%, rgba(70,45,10,.15), rgba(70,45,10,0) 60%),
       radial-gradient(50% 42% at 88% 76%, rgba(70,45,10,.13), rgba(70,45,10,0) 60%),
       linear-gradient(172deg,#c9a856 0%,#ac8438 48%,#8f6a2a 82%,#7d5c22 100%);
@@ -346,7 +347,7 @@
   .now-card[hidden]{display:none;}
   /* the screws holding the plate down — each one turned to its own angle */
   .screw{position:absolute; width:13px; height:13px; border-radius:50%; pointer-events:none; z-index:2;
-    background:radial-gradient(circle at 35% 30%, #f0da94, #bd9843 42%, #86652a 78%, #5f471a);
+    background:radial-gradient(circle at calc(35% + var(--lx,0) * 10%) calc(30% + var(--ly,0) * 10%), #f0da94, #bd9843 42%, #86652a 78%, #5f471a);
     box-shadow:inset 0 -1px 2px rgba(43,28,4,.65), inset 0 1px 1px rgba(255,252,230,.7), 0 1px 2px rgba(43,28,4,.55);}
   .screw::after{content:""; position:absolute; left:1.5px; right:1.5px; top:50%; height:2px; margin-top:-1px; border-radius:1px;
     background:linear-gradient(180deg,#33250b,#5d431a); box-shadow:0 1px 0 rgba(255,244,205,.45);

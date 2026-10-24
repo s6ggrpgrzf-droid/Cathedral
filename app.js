@@ -132,6 +132,66 @@
     dialGlassEl.style.setProperty("--glow", glowShown.toFixed(3));
   })();
 
+  /* ---------- the room's light: lacquer and brass answer the hand ----------
+     Tilt the phone (or move the mouse on a desk machine) and the reflections
+     on the clearcoat and the brass slide a little, the way a lamp moves
+     across a real finish. Two CSS variables (--lx, --ly, each -1…1) carry it;
+     one requestAnimationFrame step eases them and stops once they settle.
+     Reduced motion: the light simply stays put. */
+  (function roomLight() {
+    if (REDUCED) return;
+    var rs = document.documentElement.style;
+    var lx = 0, ly = 0, tx = 0, ty = 0, raf = 0;
+    function clamp(v) { return v < -1 ? -1 : v > 1 ? 1 : v; }
+    function step() {
+      raf = 0;
+      lx += (tx - lx) * 0.075; ly += (ty - ly) * 0.075;
+      if (Math.abs(tx - lx) < 0.002 && Math.abs(ty - ly) < 0.002) { lx = tx; ly = ty; }
+      rs.setProperty("--lx", lx.toFixed(3)); rs.setProperty("--ly", ly.toFixed(3));
+      if (lx !== tx || ly !== ty) raf = requestAnimationFrame(step);
+    }
+    function aim(x, y) {
+      tx = clamp(x); ty = clamp(y);
+      if (!raf && !document.hidden) raf = requestAnimationFrame(step);
+    }
+    /* desk: the lamp follows a mouse or pen (a finger is busy turning knobs) */
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") return;
+      aim((e.clientX / Math.max(1, window.innerWidth)) * 2 - 1, (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1);
+    }, { passive: true });
+    /* hand: tilt, measured from however you happen to hold the phone — the
+     neutral pose drifts slowly toward your grip so the light never sticks */
+    var b0 = null, g0 = null, oriOn = false;
+    function onOrient(e) {
+      if (e.beta == null || e.gamma == null) return;
+      var b = e.beta, g = e.gamma, ang = 0;
+      try { ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0; } catch (err) {}
+      if (ang === 90) { var t = b; b = -g; g = t; }
+      else if (ang === -90 || ang === 270) { var t2 = b; b = g; g = -t2; }
+      if (b0 === null) { b0 = b; g0 = g; }
+      b0 += (b - b0) * 0.004; g0 += (g - g0) * 0.004;
+      aim(-(g - g0) / 28, -(b - b0) / 28);
+    }
+    function listen() {
+      if (oriOn) return; oriOn = true;
+      window.addEventListener("deviceorientation", onOrient, { passive: true });
+    }
+    if (typeof window.DeviceOrientationEvent === "undefined") return;
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      /* iOS asks first, and only from a tap: ask once, on the first touch of
+         the set; a refusal just leaves the light where it is */
+      var asked = false;
+      var ask = function () {
+        if (asked) return; asked = true;
+        document.removeEventListener("click", ask, true);
+        try {
+          DeviceOrientationEvent.requestPermission().then(function (st) { if (st === "granted") listen(); }).catch(function () {});
+        } catch (err) {}
+      };
+      document.addEventListener("click", ask, true);
+    } else listen();
+  })();
+
   /* ---------- audio: ONE master gain rules every sound on the set ----------
      iPhones ignore an audio element's own volume, so the Volume knob turns
      this master gain instead — static, crackle, hum, whistle, clicks, the
