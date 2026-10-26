@@ -79,6 +79,17 @@
   } catch (e) {}
   function persistEpCache() { try { localStorage.setItem("cathedral_eps_v2", JSON.stringify({ ts: epCacheTs, lists: epCache })); } catch (e) {} }
 
+  /* ---------- the set's serial number: four digits stamped once, at the
+     factory (this install's first open), and kept for good ---------- */
+  var serialNo = "";
+  try { serialNo = localStorage.getItem("cathedral_serial_v1") || ""; } catch (e) {}
+  if (!/^\d{4}$/.test(serialNo)) {
+    serialNo = ("000" + (1 + Math.floor(Math.random() * 9999))).slice(-4);
+    try { localStorage.setItem("cathedral_serial_v1", serialNo); } catch (e) {}
+  }
+  var serialEl = $("nowSerial");
+  if (serialEl) serialEl.textContent = "Model 37 \u00b7 No. " + serialNo;
+
   /* ---------- knob tick rings (11 ticks, majors at the ends and centre) ---------- */
   document.querySelectorAll("[data-ticks]").forEach(function (box) {
     for (var i = 0; i <= 10; i++) {
@@ -130,6 +141,65 @@
     var glowTarget = isPlaying ? Math.min(1, 0.18 + rms * 2.4) : eyeBase * 0.65;
     glowShown += (glowTarget - glowShown) * 0.05;
     dialGlassEl.style.setProperty("--glow", glowShown.toFixed(3));
+  })();
+
+  /* ---------- the room's light: lacquer and brass answer the hand ----------
+     Tilt the phone (or move the mouse on a desk machine) and the reflections
+     on the clearcoat and the brass slide a little, the way a lamp moves
+     across a real finish. Two CSS variables (--lx, --ly, each -1…1) carry it;
+     one requestAnimationFrame step eases them and stops once they settle.
+     The light answers the hand at full motion, always. */
+  (function roomLight() {
+    var rs = document.documentElement.style;
+    var lx = 0, ly = 0, tx = 0, ty = 0, raf = 0;
+    function clamp(v) { return v < -1 ? -1 : v > 1 ? 1 : v; }
+    function step() {
+      raf = 0;
+      lx += (tx - lx) * 0.075; ly += (ty - ly) * 0.075;
+      if (Math.abs(tx - lx) < 0.002 && Math.abs(ty - ly) < 0.002) { lx = tx; ly = ty; }
+      rs.setProperty("--lx", lx.toFixed(3)); rs.setProperty("--ly", ly.toFixed(3));
+      if (lx !== tx || ly !== ty) raf = requestAnimationFrame(step);
+    }
+    function aim(x, y) {
+      tx = clamp(x); ty = clamp(y);
+      if (!raf && !document.hidden) raf = requestAnimationFrame(step);
+    }
+    /* desk: the lamp follows a mouse or pen (a finger is busy turning knobs) */
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType === "touch") return;
+      aim((e.clientX / Math.max(1, window.innerWidth)) * 2 - 1, (e.clientY / Math.max(1, window.innerHeight)) * 2 - 1);
+    }, { passive: true });
+    /* hand: tilt, measured from however you happen to hold the phone — the
+     neutral pose drifts slowly toward your grip so the light never sticks */
+    var b0 = null, g0 = null, oriOn = false;
+    function onOrient(e) {
+      if (e.beta == null || e.gamma == null) return;
+      var b = e.beta, g = e.gamma, ang = 0;
+      try { ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0; } catch (err) {}
+      if (ang === 90) { var t = b; b = -g; g = t; }
+      else if (ang === -90 || ang === 270) { var t2 = b; b = g; g = -t2; }
+      if (b0 === null) { b0 = b; g0 = g; }
+      b0 += (b - b0) * 0.004; g0 += (g - g0) * 0.004;
+      aim(-(g - g0) / 28, -(b - b0) / 28);
+    }
+    function listen() {
+      if (oriOn) return; oriOn = true;
+      window.addEventListener("deviceorientation", onOrient, { passive: true });
+    }
+    if (typeof window.DeviceOrientationEvent === "undefined") return;
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      /* iOS asks first, and only from a tap: ask once, on the first touch of
+         the set; a refusal just leaves the light where it is */
+      var asked = false;
+      var ask = function () {
+        if (asked) return; asked = true;
+        document.removeEventListener("click", ask, true);
+        try {
+          DeviceOrientationEvent.requestPermission().then(function (st) { if (st === "granted") listen(); }).catch(function () {});
+        } catch (err) {}
+      };
+      document.addEventListener("click", ask, true);
+    } else listen();
   })();
 
   /* ---------- audio: ONE master gain rules every sound on the set ----------
@@ -275,14 +345,104 @@
     }
     fadeTimer = setTimeout(fadeLoop, 900 + Math.random() * 1400);
   }
+  /* ---------- the hardware speaks: mechanical sounds, built from noise ----------
+     No samples: every switch, detent and relay is a short burst of the set's
+     own noise buffer shaped by filters (the snap), a few ringing resonances
+     (the metal), and sometimes a falling sine (the wooden body taking the
+     knock). Each one varies a little every time, the way a real part never
+     clicks the same twice. They run on their own bus under the master gain,
+     so they follow the Volume knob and fall silent with mute, and sit well
+     under the broadcast. */
+  var fxBus = null;
+  function fx() {
+    var a = ac(); if (!a) return null;
+    if (!fxBus) { fxBus = a.createGain(); fxBus.gain.value = 0.55; fxBus.connect(out()); }
+    return fxBus;
+  }
+  function vary(v, amt) { return v * (1 + (Math.random() * 2 - 1) * (amt || 0.06)); }
+  /* one noise transient: filter chain → envelope (sub-millisecond attack) */
+  function burst(t, o) {
+    var a = AC, bus = fx(); if (!a || !bus || !noiseBuf) return;
+    var s = a.createBufferSource(); s.buffer = noiseBuf;
+    var node = s;
+    if (o.hp) { var h = a.createBiquadFilter(); h.type = "highpass"; h.frequency.value = o.hp; node.connect(h); node = h; }
+    var g = a.createGain();
+    if (o.bands) {
+      o.bands.forEach(function (b) {
+        var f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = vary(b[0], 0.04); f.Q.value = b[1];
+        var bg = a.createGain(); bg.gain.value = b[2];
+        node.connect(f); f.connect(bg); bg.connect(g);
+      });
+    } else node.connect(g);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(o.amp, t + (o.att || 0.0006));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + o.dec);
+    g.connect(bus);
+    s.start(t, Math.random() * 1.8); s.stop(t + o.dec + 0.03);
+  }
+  /* the body: a short falling sine, the cabinet or the knob shaft taking the knock */
+  function body(t, f0, f1, amp, dec) {
+    var a = AC, bus = fx(); if (!a || !bus) return;
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dec * 0.7);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+    o.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + dec + 0.03);
+  }
+  /* a button key going down: a dry snap voiced by the key (freq keeps the
+     old call sites' character: low = soft, high = bright) and a little body */
   function click(freq) {
     var a = ac(); if (!a) return;
-    var o = a.createOscillator(), g = a.createGain();
-    o.type = "square"; o.frequency.value = freq || 700;
-    g.gain.setValueAtTime(0.05, a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.05);
-    o.connect(g); g.connect(out());
-    o.start(); o.stop(a.currentTime + 0.07);
+    var t = a.currentTime, f = freq || 700;
+    burst(t, { hp: 600, bands: [[vary(f * 2.6), 2.2, 1], [vary(f * 5.1), 7, 0.45]], amp: 0.22, dec: 0.022 });
+    body(t, vary(f * 0.42), f * 0.3, 0.05, 0.03);
+  }
+  /* a detent: the knob's spring-loaded ball dropping into the next notch.
+     Tiny, bright and dry; `w` (0…1) is how hard it lands */
+  var lastDetent = 0;
+  function detent(w) {
+    var a = AC; if (!a) return;
+    var now = a.currentTime;
+    if (now - lastDetent < 0.026) return;   // a fast spin blurs into a purr, not a machine gun
+    lastDetent = now;
+    var k = w == null ? 0.6 : w;
+    burst(now, { hp: 1800, bands: [[3900, 6, 1], [6800, 9, 0.5]], amp: 0.09 + 0.13 * k, dec: 0.009 + 0.006 * k });
+    body(now, vary(1150), 700, 0.012 + 0.018 * k, 0.014);
+  }
+  /* the power switch: a heavy rotary snap — the throw, the contacts' metal
+     ring, the cabinet's thump, and the rocker settling a beat later */
+  function thunk(goingOn) {
+    var a = ac(); if (!a) return;
+    var t = a.currentTime, on = goingOn !== false;
+    burst(t, { hp: 300, bands: [[vary(on ? 1450 : 1200), 1.3, 1], [vary(3100), 22, 0.6], [vary(4700), 28, 0.4]], amp: 0.42, dec: 0.085 });
+    body(t + 0.001, on ? 128 : 108, on ? 52 : 46, 0.30, 0.16);
+    burst(t + vary(0.034, 0.15), { hp: 2200, bands: [[vary(5200), 10, 1]], amp: 0.07, dec: 0.012 });
+  }
+  /* the B+ relay pulling in as the rectifier warms: tick-tack, then quiet */
+  function relayTick() {
+    var a = ac(); if (!a) return;
+    var t = a.currentTime;
+    burst(t, { hp: 1200, bands: [[vary(2600), 9, 1], [vary(5900), 14, 0.5]], amp: 0.2, dec: 0.016 });
+    burst(t + vary(0.019, 0.12), { hp: 1600, bands: [[vary(3400), 11, 1], [vary(7200), 16, 0.4]], amp: 0.12, dec: 0.012 });
+    body(t, 210, 150, 0.035, 0.03);
+  }
+  /* haptics, where the hand can feel them (feature-detected; silently absent on iOS) */
+  var canBuzz = typeof navigator.vibrate === "function", lastBuzz = 0;
+  function buzz(ms, force) {
+    if (!canBuzz) return;
+    var now = Date.now();
+    if (!force && now - lastBuzz < 45) return;
+    lastBuzz = now;
+    try { navigator.vibrate(ms); } catch (e) {}
+  }
+  /* a station drops into place: a deeper notch you can feel */
+  function lockFeel() {
+    if (AC) { lastDetent = 0; detent(1); body(AC.currentTime, 420, 220, 0.03, 0.04); }
+    buzz(12, true);
   }
   /* station-break chime: three soft bell tones, the way the networks signed a break */
   function chime() {
@@ -369,17 +529,6 @@
     var v = ratio < 0.55 ? Math.pow(1 - ratio / 0.55, 2) * 0.32 : 0;
     if (ghostGain && AC) { if (Math.abs(v - ghostGain.gain.value) > 0.015) ghostSet(v); }
     else if (Math.abs(v - ghost.volume) > 0.015) ghost.volume = v;
-  }
-  function thunk() {
-    var a = ac(); if (!a) return;
-    var o = a.createOscillator(), g = a.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(110, a.currentTime);
-    o.frequency.exponentialRampToValueAtTime(40, a.currentTime + 0.16);
-    g.gain.setValueAtTime(0.2, a.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.2);
-    o.connect(g); g.connect(out());
-    o.start(); o.stop(a.currentTime + 0.22);
   }
 
   /* ---------- episode lists: fetched once per station, then cached ---------- */
@@ -591,6 +740,27 @@
     setTimeout(function () { if (powerOn) tuneTo(g); }, 700);
   }
 
+  /* ---------- the knobs have weight: a pointer never snaps to its angle,
+     it is carried there by a soft spring — a little lag as it gets going,
+     a few degrees past, and a settle — the feel of a heavy Bakelite knob on
+     a greased shaft, carried at full motion always. ---------- */
+  function knobSpring(el) {
+    var a = null, v = 0, t = 0, raf = 0;
+    function write() { el.style.transform = "rotate(" + a.toFixed(2) + "deg)"; }
+    function step() {
+      raf = 0;
+      v += (t - a) * 0.18; v *= 0.62; a += v;
+      if (Math.abs(t - a) < 0.05 && Math.abs(v) < 0.05) { a = t; v = 0; write(); return; }
+      write(); raf = requestAnimationFrame(step);
+    }
+    return function (deg) {
+      t = deg;
+      if (a === null) { a = deg; v = 0; write(); return; }
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+  }
+  var turnTune = knobSpring(tunePtr), turnVol = knobSpring(volPtr);
+
   /* ---------- tuning: the needle has mass — a spring chases your finger,
      and the station pulls it the last of the way in ---------- */
   function stationPos(i) { return 13 + (i / Math.max(1, stations.length - 1)) * 74; }
@@ -622,11 +792,19 @@
     stationReadout.className = "dial-station" + (mode ? " " + mode : "");
   }
 
+  /* detents: the tuning shaft has 27 notches across its sweep */
+  var DETENT = 74 / 27, lastNotch = null;
+  function notchTick() {
+    var n = Math.round((sweepPos - 13) / DETENT);
+    if (lastNotch !== null && n !== lastNotch && (sweeping || chaseOn)) { detent(0.55); buzz(3); }
+    lastNotch = n;
+  }
   function paintNeedle() {
     needle.style.left = sweepPos + "%";
+    notchTick();
     paintReadout();
     /* the tuning knob turns LIVE with the needle, not only at lock */
-    if (stations.length > 1) tunePtr.style.transform = "rotate(" + (-135 + ((sweepPos - 13) / 74) * 270) + "deg)";
+    if (stations.length > 1) turnTune(-135 + ((sweepPos - 13) / 74) * 270);
     var n = distToNearest(sweepPos);
     var spacing = stations.length > 1 ? 74 / (stations.length - 1) : 74;
     var ratio = Math.min(1, n.dist / (spacing / 2));
@@ -641,8 +819,11 @@
   }
 
   function chase() {
-    sweepVel += (sweepTarget - sweepPos) * 0.16;
-    sweepVel *= 0.68;
+    /* under the hand the needle is heavy and well damped; let go, and the
+       station pulls it in on a looser spring — a hair past, then home */
+    var locking = !sweeping && lockIdx >= 0;
+    sweepVel += (sweepTarget - sweepPos) * (locking ? 0.09 : 0.11);
+    sweepVel *= locking ? 0.76 : 0.65;
     sweepPos += sweepVel;
     if (sweepPos < 5) { sweepPos = 5; sweepVel = 0; }
     if (sweepPos > 95) { sweepPos = 95; sweepVel = 0; }
@@ -654,7 +835,7 @@
       sweepPos = sweepTarget;
       paintNeedle();
       needle.style.transition = "";
-      if (!sweeping && lockIdx >= 0) { var li2 = lockIdx; lockIdx = -1; tuneTo(li2); }
+      if (!sweeping && lockIdx >= 0) { var li2 = lockIdx; lockIdx = -1; lockFeel(); tuneTo(li2); }
     }
   }
   function startChase() {
@@ -685,9 +866,10 @@
     curIdx = ((idx % stations.length) + stations.length) % stations.length;
     saveState();
     sweepPos = stationPos(curIdx); sweepTarget = sweepPos; sweepVel = 0;
+    lastNotch = Math.round((sweepPos - 13) / DETENT);
     var st = stations[curIdx], gen = ++tuneGen;
     needle.style.left = sweepPos + "%";
-    tunePtr.style.transform = "rotate(" + (-135 + (curIdx / Math.max(1, stations.length - 1)) * 270) + "deg)";
+    turnTune(-135 + (curIdx / Math.max(1, stations.length - 1)) * 270);
     paintReadout();
     status.textContent = "Tuning…";
     document.body.classList.remove("listening");
@@ -796,7 +978,7 @@
         el.removeEventListener("pointermove", mv);
         el.removeEventListener("pointerup", up);
         el.removeEventListener("pointercancel", up);
-        if (moved <= 4) { click(800); tuneTo(curIdx + 1); }
+        if (moved <= 4) { click(800); lockFeel(); tuneTo(curIdx + 1); }
         else sweepEnd();
       }
       el.addEventListener("pointermove", mv);
@@ -830,19 +1012,23 @@
   })();
   /* ---------- volume knob: turns the MASTER gain (every sound obeys) ---------- */
   function paintVol() {
-    volPtr.style.transform = "rotate(" + (-135 + (muted ? 0 : volLevel) * 270) + "deg)";
+    turnVol(-135 + (muted ? 0 : volLevel) * 270);
   }
   player.volume = 1;   // the element stays at full; the master gain does the work
   paintVol();
+  var volNotch = null;
   function setVol(v) {
     volLevel = Math.min(1, Math.max(0, v));
+    var vn = Math.round(volLevel * 20);
+    if (volNotch !== null && vn !== volNotch) { detent(0.35 + volLevel * 0.4); buzz(3); }
+    volNotch = vn;
     if (volLevel > 0) muted = false;
     applyMaster(); paintVol(); saveState();
   }
   volKnob.addEventListener("pointerdown", function (e) {
     try { volKnob.setPointerCapture(e.pointerId); } catch (err) {}
     var y0 = e.clientY, v0 = muted ? 0 : volLevel, moved = 0;
-    ac(); click(900);
+    ac(); click(900); volNotch = Math.round((muted ? 0 : volLevel) * 20);
     function mv(ev) {
       moved = Math.max(moved, Math.abs(ev.clientY - y0));
       setVol(v0 + (y0 - ev.clientY) / 170);
@@ -851,7 +1037,7 @@
       volKnob.removeEventListener("pointermove", mv);
       volKnob.removeEventListener("pointerup", up);
       volKnob.removeEventListener("pointercancel", up);
-      if (moved < 8) { muted = !muted; ac(); applyMaster(); click(muted ? 500 : 1000); paintVol(); saveState(); }
+      if (moved < 8) { muted = !muted; ac(); applyMaster(); click(muted ? 500 : 1000); buzz(8, true); paintVol(); saveState(); }
     }
     volKnob.addEventListener("pointermove", mv);
     volKnob.addEventListener("pointerup", up);
@@ -861,17 +1047,19 @@
   /* ---------- arrow keys work the focused knob ---------- */
   tuneKnob.addEventListener("keydown", function (e) {
     if (!powerOn) return;
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); click(800); tuneTo(curIdx + 1); }
-    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); click(800); tuneTo(curIdx - 1); }
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); click(800); lockFeel(); tuneTo(curIdx + 1); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); click(800); lockFeel(); tuneTo(curIdx - 1); }
   });
   volKnob.addEventListener("keydown", function (e) {
-    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) + 0.05); click(1000); }
-    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) - 0.05); click(700); }
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) + 0.05); }   // the detent is the click
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); ac(); setVol((muted ? 0 : volLevel) - 0.05); }
   });
 
   /* ---------- power ---------- */
+  var powerGen = 0;   // guards the warm-up ceremony against a quick off/on
   pow.addEventListener("click", function () {
-    thunk();
+    thunk(!powerOn); buzz(powerOn ? 14 : 20, true);
+    powerGen++;
     if (powerOn) {
       saveResume();   // powering down leaves every station where it was
       powerOn = false; isPlaying = false;
@@ -882,7 +1070,7 @@
       ghostKill();
       drawEye(0.15);
       eyeGlass.classList.remove("lit");
-      dial.classList.remove("on");
+      dial.classList.remove("on"); dial.classList.remove("filament");
       pow.classList.remove("on");
       document.body.classList.remove("listening");
       paintReadout();
@@ -899,23 +1087,31 @@
       applyMaster();
       if (!crackleTimer) crackle();
       if (!fadeTimer) fadeLoop();
-      dial.classList.add("on");
-      eyeGlass.classList.add("lit");
+      /* the warm-up, in the order a real set wakes:
+           0 ms     the pilot jewel — the switch is closed
+         ~180 ms    the dial lamp's filament glows a dull red…
+         ~950 ms    …and warms through to amber as it heats
+         ~1500 ms   the B+ relay pulls in: the tubes hum, the magic eye greens
+         ~1950 ms   and only then, sound — muffled at first, opening over ~2.6 s */
+      var pg = powerGen;
+      function stage(ms, fn) { setTimeout(function () { if (powerOn && pg === powerGen) fn(); }, ms); }
       pow.classList.add("on");
       status.textContent = "The tubes are warming…";
-      humOn();
-      /* the tubes heat: the broadcast fades from muffled to full over ~3 seconds */
+      stage(180, function () { dial.classList.add("filament"); });
+      stage(950, function () { dial.classList.remove("filament"); dial.classList.add("on"); });
+      stage(1500, function () { relayTick(); humOn(); eyeGlass.classList.add("lit"); drawEye(0.3); });
+      /* the tubes heat: the broadcast is held muffled until sound arrives, then opens out */
       if (AC && warmLP) {
-        warmLP.frequency.cancelScheduledValues(AC.currentTime);
-        warmLP.frequency.setValueAtTime(480, AC.currentTime);
-        warmLP.frequency.exponentialRampToValueAtTime(14000, AC.currentTime + 3);
+        var t0 = AC.currentTime;
+        warmLP.frequency.cancelScheduledValues(t0);
+        warmLP.frequency.setValueAtTime(480, t0);
+        warmLP.frequency.setValueAtTime(480, t0 + 1.95);
+        warmLP.frequency.exponentialRampToValueAtTime(14000, t0 + 4.6);
       }
       /* prefetch the first station's episodes while the tubes warm */
       var startIdx = curIdx < 0 ? 0 : curIdx;
       if (stations.length) fetchEpisodes(startIdx, function () {});
-      setTimeout(function () {
-        if (powerOn) tuneTo(curIdx < 0 ? 0 : curIdx);
-      }, 1100);
+      stage(1950, function () { tuneTo(curIdx < 0 ? 0 : curIdx); });
     }
   });
 
@@ -939,6 +1135,37 @@
     })
     .catch(function () { stations = []; });
 
+  /* ---------- first launch: the set fades up from darkness, once. A small
+     card names it, then lifts itself (or on a tap) and is never shown again. */
+  (function reveal() {
+    var root = document.documentElement;
+    if (!/\breveal\b/.test(root.className)) return;
+    try { localStorage.setItem("cathedral_seen_v1", "1"); } catch (e) {}
+    var veil = document.createElement("div");
+    veil.className = "reveal-veil";
+    veil.setAttribute("role", "presentation");
+    veil.innerHTML = '<div class="reveal-card"><div class="rc-name">Cathedral \u00b7 Model 37</div>' +
+      '<div class="rc-rule"></div><div class="rc-sub">No. ' + serialNo + '</div></div>';
+    document.body.appendChild(veil);
+    var card = veil.firstChild, done = false, timers = [];
+    function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function finish() {
+      if (veil.parentNode) veil.parentNode.removeChild(veil);
+      root.className = root.className.replace(/\s*\b(reveal|revealing)\b/g, "");
+    }
+    function lift() {
+      if (done) return; done = true;
+      timers.forEach(clearTimeout);
+      veil.classList.add("lift");
+      root.classList.add("revealing");
+      setTimeout(finish, 3700);
+    }
+    requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.add("in"); }); });
+    later(2900, lift);
+    veil.addEventListener("click", lift);
+    document.addEventListener("keydown", function k() { document.removeEventListener("keydown", k); lift(); });
+  })();
+
   /* the shell lives on the device: instant opens, and the set shows its
      face even with no signal (broadcasts still need the network, honestly) */
   if ("serviceWorker" in navigator) {
@@ -956,7 +1183,9 @@
     get glow() { return glowShown; },
     get eq() { return eqDone && eqBox ? { boxGain: eqBox.gain.value, lp: eqLP.frequency.value, pres: eqPresence.gain.value, compThr: eqComp.threshold.value, compRatio: eqComp.ratio.value } : null; },
     get failStreak() { return failStreak; },
+    get serial() { return serialNo; },
     get readout() { return stationReadout.textContent + "|" + stationReadout.className; },
+    get fx() { return { bus: fx, detent: detent, thunk: thunk, relay: relayTick, click: click, lock: lockFeel }; },
     tune: tuneTo,
     power: function () { pow.click(); }
   };
